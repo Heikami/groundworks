@@ -1,0 +1,1642 @@
+--[[
+# Groundworks — Consolidated GDD
+
+**Consolidated 2026-09-04.** Merges three sources into one file:
+
+1. `GROUNDWORKS_KIT_AND_DESIGN.md` — the current, superseding kit/design
+   reference (primitives, base kit, extension kit, house style, budgets,
+   interiors, small buildings).
+2. `GDD_ADDENDUM_v1.1.md` — the building-functionality layer, HQ
+   progression, real map/road data, Roblox export status, and the
+   materials/transparency/lights pass.
+3. `Groundworks_Prototype_Map_border_connected_short_bridges.html` — the
+   actual procedural map/city generator and Roblox exporter. Its own code
+   is the source of truth for the map-scale and road-width numbers quoted
+   in Part II §C below (`CORE_R`, `MAP_R`, `ROAD_WIDTHS`, etc. all verified
+   present in the file at the time of this merge).
+
+Nothing here replaces GDD v1.0 — cross-references to "§" numbers below
+point back to GDD v1.0 section numbers unless stated otherwise. Where the
+two source documents restate the same fact (e.g. the 5-tier HQ
+progression, the map-scale numbers), both are kept, side by side, since
+Part I is the *what* (kit reference) and Part II is the *why* (design-log
+addendum).
+
+---
+
+# Part I — Kit & Design Reference
+
+*(source: `GROUNDWORKS_KIT_AND_DESIGN.md`, current as of this session —
+supersedes the original `groundworks_kit_reference.js` snapshot)*
+
+## 1 · The six primitives
+
+Nothing else exists. No meshes, unions, textures, decals, CSG, or
+`Instance.new`. Every one of these records a name and (via whichever
+exporter is wired up) reaches Roblox as a real Part/WedgePart/Cylinder/Ball.
+
+```
+box(x, y, z, w, h, l, color, yawDeg, name, opts)              // y = BOTTOM
+orientedBox(x, y, z, w, h, l, color, right, up, back, name, opts)  // y = CENTRE
+wedgeRoof(x, y, z, w, h, l, color, yawDeg, name, opts)         // y = BOTTOM — DO NOT USE
+cylinder(x, y, z, r, h, color, seg, name, opts)                // y = BOTTOM, vertical only
+ball(x, y, z, r, color, name, rings, seg, opts)                // y = CENTRE
+wedgeFace(a, b, c, color, name, thick, opts)                   // 3D triangle → 2 real WedgeParts
+```
+
+**`wedgeRoof` is disqualified — never call it directly.** It previews as a
+four-sided pyramid but exports as a single `WedgePart` (a one-way ramp).
+Preview and export disagree. Build every pitched roof through
+`gwPitchRoof`, barrel roof through `gwArchRoof`, sawtooth through
+`gwSawtoothRoof` — all three route through `wedgeFace`, which is correct.
+
+**`cylinder` is vertical only.** Lying tanks, pipe runs, horizontal beams
+are `orientedBox` and read square-section. Accept that.
+
+**No subtraction, anywhere.** A recess is piers standing in front of a
+set-back wall. A tunnel mouth is a portal frame in front of a dark panel.
+Never a hole cut into anything.
+
+### `wedgeFace` — the one primitive that's been wrong before
+
+The version copied from `v1.html` into `_harness.js` originally only
+stored the raw triangle for preview — it never computed a real oriented
+part, so it was never actually exportable. **Fixed**: `wedgeFace` now
+decomposes the triangle into two correctly-oriented WedgeParts (real
+`pos`/`size`/`right`/`up`/`back`), matching the one file that already had
+this right (the BSP map generator). Consequence: **every `wedgeFace` call
+now emits two real parts, not one.** `gwPitchRoof`, `gwArchRoof`, and
+`gwSawtoothRoof`'s returned part counts have been corrected to match
+(`return 12` not `return 6`, etc.). If you're porting this kit into a
+fourth codebase, port the fixed version, not the original.
+
+### The trailing `opts` object — materials, transparency, lights
+
+Every primitive above takes an optional final argument:
+
+```js
+{ material, transparency, light: { type:'Point'|'Spot', color, brightness, range, angle } }
+```
+
+- **`material`** — an `Enum.Material` name string (`'Concrete'`, `'Metal'`,
+  `'Wood'`, `'Neon'`, ...). If omitted, it's **inferred automatically** —
+  nearest-neighbor RGB match against a table of known palette base colors,
+  which correctly handles `tint()`'d shades (the overwhelming majority of
+  colors this kit ever emits — base/body/cap shading, rib darkening, etc.
+  almost never hit an exact table entry, so the nearest-neighbor match is
+  what actually does the work, not the table lookup itself). Falls back to
+  a coarse hue/lightness bucket only when nothing plausible is close.
+- **`transparency`** — 0 to 1, default 0.
+- **`light`** — spawns a real `PointLight`/`SpotLight` as a child of the
+  part on export (and in `v1.html`'s three.js preview, a real light too).
+
+**Fully backward-compatible** — `opts` is trailing and optional. Every
+existing call across ~90 buildings still works unchanged; it just gets a
+sensible inferred material instead of no material at all.
+
+**One structural exception**: `gwSlab` always passes
+`{ material: 'Concrete' }` explicitly. A slab is definitionally a poured
+pad regardless of what color it's tinted to match the building above it —
+color inference has no way to know that, and guessing from a heavily
+tinted slab color has produced wrong answers before (a darkened red-rock
+slab was once inferred as "Wood," because that tint happens to land almost
+exactly on an unrelated palette entry in RGB space).
+
+Full material table and the nearest-neighbor matcher are in `_harness.js`
+(source below) — same table duplicated (necessarily — separate closures,
+no shared imports across the HTML files) in `Groundworks_Main.html` and
+`Groundworks_Main_V0.001.html`.
+
+### Helpers (non-emitting)
+
+```
+rgb(hex), shade(rgbArr, amt), toHex(rgbArr), tint(hex, amt)
+heightBase(x, z), heightAt(x, z)
+R(yaw) → { ux, uz, vx, vz }        — rotation basis for a yaw in degrees
+off(x, z, yaw, along, across) → [x, z]   — offset a point along/across a yawed axis
+```
+
+---
+
+## 2 · The 28-function base kit (verbatim, current)
+
+Composed entirely from the six primitives above. Every building composes
+from these — that's what keeps dozens of buildings reading as one
+architecture. Full current source (with the `wedgeFace`-count fixes and
+`opts` support already applied):
+
+```js
+function gwSlab(x, z, w, l, yaw, color, key, pad = 14){
+  const gy = heightBase(x, z);
+  box(x, gy - 2, z, w + pad*2, 6, l + pad*2, tint(color, -.22), yaw, `${key}_Slab_1`, { material: 'Concrete' });
+  return 1;
+}
+
+function gwRibs(x, y, z, w, l, h, yaw, color, key, pitch = 64){
+  const fw = Math.max(8, Math.min(28, h * 0.02)), prot = 2,
+        n = Math.max(0, Math.floor(w / pitch) - 1);
+  if (!n) return 0;
+  let c = 0;
+  for (const side of [-1, 1]){
+    for (let i = 1; i <= n; i++){
+      const along = -w/2 + i * w / (n + 1),
+            [px, pz] = off(x, z, yaw, along, side * (l/2 + prot/2));
+      box(px, y - h/2, pz, fw, h, prot, tint(color, -.13), yaw, `${key}_Rib_${side < 0 ? 'A' : 'B'}${i}`);
+      c++;
+    }
+  }
+  return c;
+}
+
+function gwStaged(x, z, w, l, h, yaw, color, key, opts = {}){
+  const gy = opts.baseY ?? heightBase(x, z) + 4;
+  if (h < 90){
+    box(x, gy, z, w, h, l, color, yaw, `${key}_Mass_1`);
+    return { parts:1, gy, topY: gy + h, baseH:0, bodyH:h, capH:0 };
+  }
+  const baseH = Math.round(h * (opts.baseFrac ?? 0.11)),
+        capH  = Math.max(6, Math.round(h * (opts.capFrac ?? 0.04))),
+        bodyH = h - baseH - capH,
+        flare = opts.flare ?? 6, capFlare = opts.capFlare ?? 4;
+  box(x, gy, z, w + flare*2, baseH, l + flare*2, tint(color, -.14), yaw, `${key}_Base_1`);
+  box(x, gy + baseH, z, w, bodyH, l, color, yaw, `${key}_Body_1`);
+  box(x, gy + baseH + bodyH, z, w + capFlare*2, capH, l + capFlare*2, tint(color, .15), yaw, `${key}_Cap_1`);
+  let c = 3;
+  if (opts.ribs !== false) c += gwRibs(x, gy + baseH + bodyH/2, z, w, l, bodyH, yaw, color, key, opts.pitch ?? 64);
+  return { parts:c, gy, topY: gy + h, baseH, bodyH, capH };
+}
+
+function gwPitchRoof(x, z, w, l, h, yaw, color, key, eaveY){
+  const r = R(yaw), hw = w/2, hl = l/2,
+        P = (a, c) => [x + r.ux*a + r.vx*c, z + r.uz*a + r.vz*c];
+  const c0 = P(-hw,-hl), c1 = P(hw,-hl), c2 = P(hw,hl), c3 = P(-hw,hl),
+        r0 = P(-hw, 0), r1 = P(hw, 0),
+        A = [c0[0], eaveY, c0[1]], B = [c1[0], eaveY, c1[1]],
+	C = [c2[0], eaveY, c2[1]], D = [c3[0], eaveY, c3[1]],
+	Ra = [r0[0], eaveY + h, r0[1]], Rb = [r1[0], eaveY + h, r1[1]];
+wedgeFace(A, B, Rb, color, `${key}_Roof_1`, 8);
+wedgeFace(A, Rb, Ra, color, `${key}_Roof_2`, 8);
+wedgeFace(C, D, Ra, tint(color, -.07), `${key}_Roof_3`, 8);
+wedgeFace(C, Ra, Rb, tint(color, -.07), `${key}_Roof_4`, 8);
+wedgeFace(A, Ra, D, tint(color, -.12), `${key}_Gable_1`, 8);
+wedgeFace(B, C, Rb, tint(color, -.12), `${key}_Gable_2`, 8);
+return 12; // 6 wedgeFace() calls x 2 real WedgeParts each
+}
+
+function gwSawtoothRoof(x, z, w, l, bays, yaw, color, key, eaveY, rise = 22){
+	const r = R(yaw), hw = w/2, hl = l/2, cell = l / bays,
+	P = (a, c) => [x + r.ux*a + r.vx*c, z + r.uz*a + r.vz*c];
+	let n = 0;
+	for (let i = 0; i < bays; i++){
+		const c0 = -hl + i*cell, c1 = c0 + cell,
+		lo0 = P(-hw, c0), lo1 = P(hw, c0), hi0 = P(-hw, c1), hi1 = P(hw, c1),
+		A = [lo0[0], eaveY, lo0[1]], B = [lo1[0], eaveY, lo1[1]],
+		C = [hi1[0], eaveY + rise, hi1[1]], D = [hi0[0], eaveY + rise, hi0[1]];
+		wedgeFace(A, B, C, color, `${key}_Saw_${i+1}a`, 8);
+		wedgeFace(A, C, D, color, `${key}_Saw_${i+1}b`, 8);
+		n += 4; // 2 wedgeFace() calls x 2 real WedgeParts each
+		const [mx, mz] = off(x, z, yaw, 0, c1);
+		box(mx, eaveY, mz, w, rise, 3, tint(color, -.20), yaw, `${key}_SawRiser_${i+1}`);
+		n++;
+		}
+		return n;
+		}
+
+	function gwSiloTower(x, z, r, h, yaw, color, key, idx = 1){
+		const gy = heightBase(x, z) + 4;
+		cylinder(x, gy, z, r, h, color, 12, `${key}_Shell_${idx}`);
+		cylinder(x, gy + h * 0.62, z, r + 2, 8, tint(color, -.20), 12, `${key}_Band_${idx}`);
+		cylinder(x, gy + h, z, r - 3, 8, tint(color, .14), 12, `${key}_Cap_${idx}`);
+		return 3;
+		}
+
+		function gwStack(x, z, r, h, color, key, idx = 1){
+			const gy = heightBase(x, z) + 4;
+			cylinder(x, gy, z, r, h, color, 10, `${key}_Stack_${idx}`);
+			cylinder(x, gy + h, z, r + 2, 6, tint(color, .18), 10, `${key}_StackCap_${idx}`);
+			return 2;
+			}
+
+			function gwCanopy(x, z, w, l, h, yaw, color, key){
+				const gy = heightBase(x, z) + 4;
+				let n = 0;
+				for (const a of [-1, 1]) for (const c of [-1, 1]){
+						const [px, pz] = off(x, z, yaw, a * (w/2 - 6), c * (l/2 - 6));
+						box(px, gy, pz, 8, h, 8, tint(color, -.18), yaw, `${key}_CanopyPier_${n+1}`); n++;
+						}
+						box(x, gy + h, z, w, 6, l, tint(color, .08), yaw, `${key}_CanopyDeck_1`); n++;
+						return n;
+						}
+
+				function gwEntryEnsemble(x, z, yaw, color, key, hostHeight){
+					const gy = heightBase(x, z) + 4;
+					const tier = hostHeight < 120 ? 1 : hostHeight < 350 ? 2 : 3;
+					const w = tier === 1 ? 14 : tier === 2 ? 32 : 54,
+					h = tier === 1 ? 14 : tier === 2 ? 26 : 44;
+					let n = 0;
+					box(x, gy - 1, z, w + 10, 4, 18, tint(color, -.10), yaw, `${key}_EntryStep_1`); n++;
+					if (tier >= 2){
+						for (const s of [-1, 1]){
+							const [px, pz] = off(x, z, yaw, s * (w/2 - 5), 0);
+							box(px, gy + 3, pz, 10, h, 12, tint(color, -.16), yaw, `${key}_EntryPier_${s < 0 ? 1 : 2}`); n++;
+							}
+							}
+						const [cx, cz] = off(x, z, yaw, 0, -8);
+						box(cx, gy + 3 + h, cz, w + 8, 5, 24, tint(color, .16), yaw, `${key}_EntryCanopy_1`); n++;
+						if (tier === 3){
+							const [bx, bz] = off(x, z, yaw, 0, 6);
+							box(bx, gy + 3, bz, w - 22, h, 4, tint(color, -.26), yaw, `${key}_EntryRecess_1`); n++;
+							}
+							const [dx, dz] = off(x, z, yaw, 0, 2);
+							box(dx, gy + 3, dz, 7, 10, 1, '#2b2f33', yaw, `${key}_Door_1`); n++;
+							return n;
+							}
+
+					function gwLoadingDock(x, z, bays, yaw, color, key){
+						const gy = heightBase(x, z) + 4, pitch = 34;
+						let n = 0;
+						box(x, gy, z, bays * pitch + 16, 12, 22, tint(color, -.20), yaw, `${key}_DockApron_1`); n++;
+						for (let i = 0; i < bays; i++){
+							const along = (i - (bays - 1) / 2) * pitch, [px, pz] = off(x, z, yaw, along, 0);
+							box(px, gy + 12, pz, 22, 16, 3, tint(color, -.30), yaw, `${key}_DockDoor_${i+1}`); n++;
+							box(px, gy + 12, pz, 26, 3, 5, tint(color, .10), yaw, `${key}_DockBumper_${i+1}`); n++;
+							}
+							return n;
+							}
+
+						function gwConveyorRun(x1, z1, y1, x2, z2, y2, color, key){
+							const dx = x2 - x1, dz = z2 - z1, dy = y2 - y1,
+							run = Math.hypot(dx, dz), len = Math.hypot(run, dy);
+							if (run < 1) return 0;
+								const ux = dx / run, uz = dz / run,
+								right = [ux * (run/len), dy/len, uz * (run/len)],
+								up = [-ux * (dy/len), run/len, -uz * (dy/len)],
+								back = [-uz, 0, ux];
+								orientedBox((x1+x2)/2, (y1+y2)/2, (z1+z2)/2, len, 7, 14, color, right, up, back, `${key}_Conveyor_1`);
+								let n = 1;
+								const trestles = Math.max(1, Math.floor(len / 70));
+								for (let i = 1; i <= trestles; i++){
+									const t = i / (trestles + 1), tx = x1 + dx*t, tz = z1 + dz*t, ty = y1 + dy*t, g = heightBase(tx, tz);
+									box(tx, g, tz, 7, Math.max(4, ty - g), 7, tint(color, -.18), 0, `${key}_ConveyorLeg_${i}`); n++;
+									}
+									return n;
+									}
+
+							function gwStairTower(x, z, h, yaw, color, key){
+								const gy = heightBase(x, z) + 4;
+								box(x, gy, z, 16, h, 16, tint(color, -.12), yaw, `${key}_Stair_1`);
+								box(x, gy + h, z, 20, 5, 20, tint(color, .14), yaw, `${key}_StairCap_1`);
+								const flights = Math.max(2, Math.min(8, Math.floor(h / 45)));
+								let n = 2;
+								for (let i = 1; i <= flights; i++){
+									const [px, pz] = off(x, z, yaw, 0, 10);
+									box(px, gy + h * i / (flights + 1), pz, 18, 2, 6, tint(color, .04), yaw, `${key}_StairLanding_${i}`); n++;
+									}
+									return n;
+									}
+
+								function gwHallShell(x, z, w, l, h, yaw, color, key, opts = {}){
+									let n = gwSlab(x, z, w, l, yaw, color, key, opts.pad ?? 16);
+									n += gwStaged(x, z, w, l, h, yaw, color, key, { pitch: opts.pitch ?? 74, flare: 7, ...opts }).parts;
+									return n;
+									}
+
+									function gwArchRoof(x, z, w, l, rise, yaw, color, key, eaveY, segs = 6){
+										const r = R(yaw), P = (a, c) => [x + r.ux*a + r.vx*c, z + r.uz*a + r.vz*c],
+										prof = t => eaveY + Math.sin(Math.PI * t) * rise;
+										let n = 0;
+										for (let i = 0; i < segs; i++){
+											const t0 = i/segs, t1 = (i+1)/segs,
+											a0 = -w/2 + w*t0, a1 = -w/2 + w*t1, y0 = prof(t0), y1 = prof(t1),
+											p00 = P(a0, -l/2), p01 = P(a0, l/2), p10 = P(a1, -l/2), p11 = P(a1, l/2),
+											col = tint(color, (i % 2) * .035);
+											wedgeFace([p00[0],y0,p00[1]], [p10[0],y1,p10[1]], [p11[0],y1,p11[1]], col, `${key}_Roof_${i+1}a`, 10);
+											wedgeFace([p00[0],y0,p00[1]], [p11[0],y1,p11[1]], [p01[0],y0,p01[1]], col, `${key}_Roof_${i+1}b`, 10);
+											n += 4; // 2 wedgeFace() calls x 2 real WedgeParts each
+											for (const e of [-1, 1]){
+												const q0 = P(a0, e*l/2), q1 = P(a1, e*l/2), c0 = P(0, e*l/2);
+												wedgeFace([q0[0],y0,q0[1]], [q1[0],y1,q1[1]], [c0[0],eaveY,c0[1]], tint(color, -.16), `${key}_Gable_${i+1}${e<0?'A':'B'}`, 8);
+												n += 2; // 1 wedgeFace() call x 2 real WedgeParts
+												}
+												}
+											return n;
+											}
+
+										function gwShellRing(x, y, z, w, l, h, yaw, color, key, tag, thick = 6, door = null){
+											let n = 0;
+											const put = (along, across, ww, ll, hh, yy, name, col) => {
+												const [px, pz] = off(x, z, yaw, along, across);
+												box(px, yy, pz, ww, hh, ll, col || color, yaw, name); n++;
+											};
+											put(0, -(l/2 - thick/2), w, thick, h, y, `${key}_${tag}WallBack_1`);
+											put(-(w/2 - thick/2), 0, thick, l, h, y, `${key}_${tag}WallLeft_1`);
+											put( (w/2 - thick/2), 0, thick, l, h, y, `${key}_${tag}WallRight_1`);
+											if (!door){
+												put(0, (l/2 - thick/2), w, thick, h, y, `${key}_${tag}WallFront_1`);
+												} else {
+	const dw = Math.min(door.w, w - 24), dh = Math.min(door.h ?? h, h),
+	pier = (w - dw) / 2;
+	for (const s of [-1, 1])
+		put(s * (dw + pier) / 2, (l/2 - thick/2), pier, thick, h, y, `${key}_${tag}Pier_${s < 0 ? 1 : 2}`);
+		if (dh < h) put(0, (l/2 - thick/2), dw, thick, h - dh, y + dh, `${key}_${tag}Lintel_1`);
+			}
+	return n;
+	}
+
+	function gwStagedShell(x, z, w, l, h, yaw, color, key, opts = {}){
+	const gy = opts.baseY ?? heightBase(x, z) + 4,
+	thick = opts.thick ?? 6,
+	baseH = Math.round(h * (opts.baseFrac ?? 0.11)),
+	capH  = Math.max(6, Math.round(h * (opts.capFrac ?? 0.04))),
+	bodyH = h - baseH - capH,
+	flare = opts.flare ?? 6, capFlare = opts.capFlare ?? 4;
+	let n = 0;
+	box(x, gy - 1, z, w - thick, 3, l - thick, opts.floorColor || tint(color, -.30), yaw, `${key}_Floor_1`); n++;
+	n += gwShellRing(x, gy, z, w + flare*2, l + flare*2, baseH, yaw, tint(color, -.14), key, 'Base', thick + 2,
+		opts.door ? { w: opts.door.w + 8, h: baseH } : null);
+	n += gwShellRing(x, gy + baseH, z, w, l, bodyH, yaw, color, key, 'Body', thick,
+		opts.door ? { w: opts.door.w, h: Math.min(opts.door.h ?? bodyH, bodyH) } : null);
+	n += gwShellRing(x, gy + baseH + bodyH, z, w + capFlare*2, l + capFlare*2, capH, yaw, tint(color, .15), key, 'Cap', thick + 2);
+	if (opts.ribs !== false) n += gwRibs(x, gy + baseH + bodyH/2, z, w, l, bodyH, yaw, color, key, opts.pitch ?? 64);
+		return { parts:n, gy, topY: gy + h, baseH, bodyH, capH };
+		}
+
+	function gwInteriorColumns(x, z, w, l, h, yaw, color, key, count = 3){
+		const gy = heightBase(x, z) + 4;
+		let n = 0;
+		for (let i = 0; i < count; i++){
+			const [px, pz] = off(x, z, yaw, (i - (count-1)/2) * (w / (count + 1)), 0);
+			box(px, gy, pz, 9, h, 9, tint(color, -.16), yaw, `${key}_Column_${i+1}`); n++;
+			}
+			return n;
+			}
+
+		function gwTruss(x, z, w, yaw, color, key, idx, eaveY, riseH, along = 0){
+			const r = R(yaw), half = w/2, len = Math.hypot(half, riseH),
+			[cx, cz] = off(x, z, yaw, 0, along);
+			let n = 0;
+			for (const s of [-1, 1]){
+				const dirx = r.ux * half * s, dirz = r.uz * half * s,
+				right = [dirx/len, riseH/len, dirz/len],
+				up = [-dirx*riseH/(len*half), half/len, -dirz*riseH/(len*half)],
+				back = [r.vx, 0, r.vz],
+				[mx, mz] = off(cx, cz, yaw, s * half/2, 0);
+				orientedBox(mx, eaveY + riseH/2, mz, len, 4, 5, color, right, up, back, `${key}_Rafter_${idx}${s<0?'A':'B'}`); n++;
+				}
+				orientedBox(cx, eaveY + 2, cz, w, 4, 5, tint(color, -.08), [r.ux,0,r.uz], [0,1,0], [r.vx,0,r.vz], `${key}_TieBeam_${idx}`); n++;
+				box(cx, eaveY, cz, 4, riseH, 5, tint(color, -.12), yaw, `${key}_KingPost_${idx}`); n++;
+				return n;
+				}
+
+			function gwEaves(x, z, w, l, yaw, color, key, eaveY, dropTo){
+				let n = 0;
+				box(x, eaveY, z, w + 8, 5, l + 8, tint(color, .12), yaw, `${key}_Fascia_1`); n++;
+				for (const a of [-1, 1]) for (const c of [-1, 1]){
+						const [px, pz] = off(x, z, yaw, a * (w/2 + 2), c * (l/2 + 2));
+						box(px, dropTo, pz, 4, eaveY - dropTo, 4, tint(color, -.24), yaw, `${key}_Downpipe_${n}`); n++;
+						}
+						return n;
+						}
+
+				function gwParapetRail(x, z, w, l, yaw, color, key, deckY, h = 9){
+					let n = 0, posts = Math.max(2, Math.floor(w / 46));
+					for (const c of [-1, 1]){
+						for (let i = 0; i <= posts; i++){
+							const [px, pz] = off(x, z, yaw, -w/2 + i * w/posts, c * l/2);
+							box(px, deckY, pz, 3, h, 3, tint(color, -.20), yaw, `${key}_RailPost_${n}`); n++;
+							}
+							const [rx, rz] = off(x, z, yaw, 0, c * l/2);
+							box(rx, deckY + h, rz, w, 2, 4, tint(color, .10), yaw, `${key}_RailTop_${c < 0 ? 1 : 2}`); n++;
+							}
+						return n;
+						}
+
+					function gwLadderCage(x, z, yaw, color, key, baseY, h){
+						let n = 0;
+						box(x, baseY, z, 5, h, 2, tint(color, -.22), yaw, `${key}_Ladder_1`); n++;
+						box(x, baseY + 12, z, 7, h - 12, 6, tint(color, -.10), yaw, `${key}_LadderCage_1`); n++;
+						const rests = Math.max(1, Math.floor(h / 60));
+						for (let i = 1; i <= rests; i++){
+							box(x, baseY + h * i / (rests + 1), z, 11, 2, 9, tint(color, .08), yaw, `${key}_LadderRest_${i}`); n++;
+							}
+							return n;
+							}
+
+						function gwLightMast(x, z, color, key, idx = 1, h = 62){
+							const gy = heightBase(x, z);
+							let n = 0;
+							box(x, gy - 1, z, 10, 5, 10, tint(color, -.26), 0, `${key}_MastBase_${idx}`); n++;
+							cylinder(x, gy + 4, z, 3, h, tint(color, -.06), 8, `${key}_Mast_${idx}`); n++;
+							box(x, gy + 4 + h, z, 20, 4, 8, tint(color, .10), 0, `${key}_MastHead_${idx}`); n++;
+							for (const s of [-1, 1]){ box(x + s * 6, gy + h, z, 6, 4, 6, '#e8e2c6', 0, `${key}_Lamp_${idx}${s<0?'A':'B'}`); n++; }
+								return n;
+								}
+
+							function gwPipeRack(x, z, len, yaw, color, key, pipes = 3){
+								const gy = heightBase(x, z) + 4, r = R(yaw),
+								right = [r.ux, 0, r.uz], up = [0, 1, 0], back = [r.vx, 0, r.vz];
+								let n = 0;
+								const posts = Math.max(2, Math.floor(len / 60));
+								for (let i = 0; i <= posts; i++){
+									const [px, pz] = off(x, z, yaw, -len/2 + i * len/posts, 0);
+									box(px, gy, pz, 6, 34, 6, tint(color, -.20), yaw, `${key}_RackPost_${i+1}`); n++;
+									}
+									for (let p = 0; p < pipes; p++){
+										orientedBox(x, gy + 24 + p * 7, z, len, 5, 5, tint(color, .04 * p - .04), right, up, back, `${key}_Pipe_${p+1}`); n++;
+										}
+										return n;
+										}
+
+								function gwRoofVents(x, z, w, yaw, color, key, deckY, count = 3){
+									let n = 0;
+									for (let i = 0; i < count; i++){
+										const [px, pz] = off(x, z, yaw, (i - (count-1)/2) * (w / (count + 1)), 0);
+										box(px, deckY, pz, 16, 10, 14, tint(color, -.10), yaw, `${key}_Vent_${i+1}`); n++;
+										box(px, deckY + 10, pz, 22, 3, 20, tint(color, .14), yaw, `${key}_VentCap_${i+1}`); n++;
+										}
+										return n;
+										}
+
+									function gwBollardRun(x, z, len, yaw, color, key, count = 5){
+										let n = 0;
+										for (let i = 0; i < count; i++){
+											const [px, pz] = off(x, z, yaw, -len/2 + i * len/(count-1), 0);
+											cylinder(px, heightBase(px, pz), pz, 2.5, 9, color, 8, `${key}_Bollard_${i+1}`); n++;
+											}
+											return n;
+											}
+
+										function gwFenceRun(x1, z1, x2, z2, color, key, spacing = 44){
+											const dx = x2 - x1, dz = z2 - z1, len = Math.hypot(dx, dz);
+											if (len < 1) return 0;
+												const yawDeg = Math.atan2(dz, dx) * 180 / Math.PI, r = R(yawDeg),
+												posts = Math.max(2, Math.round(len / spacing));
+												let n = 0;
+												for (let i = 0; i <= posts; i++){
+													const t = i / posts, px = x1 + dx*t, pz = z1 + dz*t;
+													box(px, heightBase(px, pz), pz, 3, 15, 3, color, yawDeg, `${key}_FencePost_${i+1}`); n++;
+													}
+													const mx = (x1+x2)/2, mz = (z1+z2)/2, gyM = heightBase(mx, mz);
+													for (const hgt of [7, 13]){
+														orientedBox(mx, gyM + hgt, mz, len, 2, 2, tint(color, .10), [r.ux,0,r.uz], [0,1,0], [r.vx,0,r.vz], `${key}_FenceRail_${hgt}`); n++;
+														}
+														return n;
+														}
+
+											function gwYardStack(x, z, w, l, h, yaw, color, key, kind = 'bale', idx = 1){
+												const gy = heightBase(x, z);
+												let n = 0, tiers = kind === 'heap' ? 3 : 2;
+												for (let i = 0; i < tiers; i++){
+													const s = kind === 'heap' ? 1 - i * 0.26 : 1 - i * 0.12;
+													box(x, gy + (h / tiers) * i, z, w * s, h / tiers, l * s, tint(color, -.05 * i), yaw, `${key}_Stack${idx}_${i+1}`); n++;
+													}
+													return n;
+													}
+												```
+
+												---
+
+												## 3 · The 22-function extension kit (verbatim, current)
+
+													**Not part of the base kit** — a separate, optional layer
+													(`_gw_kit_ext.js`), `require()`-able alongside the base kit's functions.
+													Two honest tiers:
+
+														- **Earned (11)** — patterns already hand-built ≥2 times across real
+													buildings before being promoted. Safe to treat as vocabulary.
+														- **Padding (11)**, each marked `PADDING` inline — added to reach a
+													requested count, not because the pattern proved itself. Most have
+													appeared at most once, `gwLoaderShed` is a literal alias of `gwCanopy`
+													with no new geometry. Low-confidence; use with that understanding.
+
+														```js
+													function gwLeggedDeck(x, z, w, l, legH, yaw, color, key, deckH = 7){
+														const gy = heightBase(x, z) + 4;
+														let n = 0;
+														for (const a of [-1, 1]) for (const c of [-1, 1]){
+																const [px, pz] = off(x, z, yaw, a * (w / 2 - 6), c * (l / 2 - 6));
+																box(px, heightBase(px, pz), pz, 11, legH + 6, 11, tint(color, -.22), yaw,
+																	`${key}_LegDeckLeg_${(a < 0 ? 'A' : 'B') + (c < 0 ? 1 : 2)}`); n++;
+																}
+																for (const c of [-1, 1]){
+																	const [px, pz] = off(x, z, yaw, 0, c * (l / 2 - 6));
+																	box(px, gy + legH - 12, pz, w - 20, 5, 5, tint(color, -.14), yaw, `${key}_LegDeckBrace_${c < 0 ? 1 : 2}`); n++;
+																	}
+																	box(x, gy + legH, z, w, deckH, l, tint(color, -.08), yaw, `${key}_LegDeckPlate_1`); n++;
+																	return { parts: n, gy, deckY: gy + legH, topY: gy + legH + deckH };
+																	}
+
+														function gwCatwalkRing(x, z, w, l, yaw, color, key, deckY, railH = 7, deckH = 4){
+															let n = 0;
+															box(x, deckY, z, w, deckH, l, tint(color, -.06), yaw, `${key}_CatwalkDeck_1`); n++;
+															n += gwParapetRail(x, z, w, l, yaw, color, key + '_Catwalk', deckY + deckH, railH);
+															return n;
+															}
+
+															function gwBundPair(x, z, w, l, yaw, color, key, h = 9){
+																let n = 0;
+																for (const side of [-1, 1]){
+																	const [bx, bz] = off(x, z, yaw, side * (w / 2 + 4), 0);
+																	box(bx, heightBase(bx, bz) - 1, bz, 5, h, l + 12, tint(color, -.18), yaw, `${key}_Bund_${side < 0 ? 1 : 2}`); n++;
+																	}
+																	return n;
+																	}
+
+																function gwTrackRun(x, z, runLen, yaw, color, key, gauge = 13, spacing = 26){
+																	const r = R(yaw), sleepers = Math.max(2, Math.round(runLen / spacing));
+																	let n = 0;
+																	for (let i = 0; i < sleepers; i++){
+																		const along2 = -runLen / 2 + i * (runLen / (sleepers - 1 || 1));
+																		const [sx, sz] = off(x, z, yaw, 0, along2);
+																		box(sx, heightBase(sx, sz) + 1, sz, 26, 4, 10, tint(color, -.24), yaw + 90, `${key}_Sleeper_${i + 1}`); n++;
+																		}
+																		for (const s of [-1, 1]){
+																			const [rx, rz] = off(x, z, yaw, s * gauge / 2, 0);
+																			orientedBox(rx, heightBase(rx, rz) + 4, rz, runLen, 3, 3, tint(color, .10),
+																				[r.vx, 0, r.vz], [0, 1, 0], [-r.ux, 0, -r.uz], `${key}_Rail_${s < 0 ? 1 : 2}`); n++;
+																			}
+																			return n;
+																			}
+
+																	function gwTankFarm(x, z, count, spacing, tankR, tankH, yaw, color, key, bundColor){
+																		let n = gwSlab(x, z, spacing * count + 40, tankR * 2 + 40, yaw, bundColor || tint(color, -.10), key + '_Bund', 8);
+																		for (let i = 0; i < count; i++){
+																			const [tx, tz] = off(x, z, yaw, (i - (count - 1) / 2) * spacing, 0);
+																			n += gwSiloTower(tx, tz, tankR, tankH, yaw, color, key + '_Tank', i + 1);
+																			}
+																			return n;
+																			}
+
+																		function gwRetainingWall(x, z, len, h, yaw, color, key, buttresses = 5){
+																			let n = 0;
+																			box(x, heightBase(x, z) - 8, z, len, h, 16, tint(color, -.18), yaw, `${key}_RetainingWall_1`); n++;
+																			for (let i = 0; i < buttresses; i++){
+																				const along = -len / 2 + (i + 0.5) * (len / buttresses);
+																				const [bx, bz] = off(x, z, yaw, along, 0);
+																				box(bx, heightBase(bx, bz) - 8, bz, 12, h + 6, 20, tint(color, -.28), yaw, `${key}_TerraceBut_${i + 1}`); n++;
+																				}
+																				return n;
+																				}
+
+																			function gwBoomGate(x, z, yaw, color, key, armColor, armLen = 26, h = 14){
+																				const gy = heightBase(x, z) + 4, r = R(yaw);
+																				let n = 0;
+																				box(x, gy, z, 6, h, 6, tint(color, -.14), yaw, `${key}_BoomPost_1`); n++;
+																				box(x, gy, z, 10, 6, 10, tint(color, -.24), yaw, `${key}_BoomCounterweight_1`); n++;
+																				const [amx, amz] = off(x, z, yaw, armLen / 2, 0);
+																				orientedBox(amx, gy + h - 2, amz, armLen, 3, 3, armColor,
+																					[r.ux, 0, r.uz], [0, 1, 0], [r.vx, 0, r.vz], `${key}_BoomArm_1`); n++;
+																				return n;
+																				}
+
+																				function gwWeighbridge(x, z, yaw, color, key, len = 60){
+																					const gy = heightBase(x, z);
+																					let n = 0;
+																					box(x, gy, z, 22, 3, len, tint(color, -.14), yaw, `${key}_WeighDeck_1`); n++;
+																					box(x, gy + 3, z, 6, 12, 6, color, yaw, `${key}_WeighHead_1`); n++;
+																					box(x, gy + 15, z, 10, 6, 10, tint(color, .10), yaw, `${key}_WeighHeadCap_1`); n++;
+																					return n;
+																					}
+
+																					function gwGantryCrane(x, z, span, h, yaw, color, key, accent){
+																						const r = R(yaw), RX = [r.ux, 0, r.uz], UY = [0, 1, 0], BZ = [r.vx, 0, r.vz];
+																						let n = 0;
+																						for (const s of [-1, 1]){
+																							for (const a of [-1, 1]){
+																								const [gx, gz] = off(x, z, yaw, a * 20, s * span / 2);
+																								box(gx, heightBase(gx, gz), gz, 12, h, 12, color, yaw, `${key}_GantryLeg_${s < 0 ? 'A' : 'B'}${a < 0 ? 1 : 2}`); n++;
+																								}
+																								const [sbx, sbz] = off(x, z, yaw, 0, s * span / 2);
+																								orientedBox(sbx, heightBase(sbx, sbz) + h - 8, sbz, 52, 8, 14, tint(color, -.10), RX, UY, BZ, `${key}_GantryPortal_${s < 0 ? 1 : 2}`); n++;
+																								}
+																							box(x, heightBase(x, z) + h, z, 18, 10, span + 14, tint(color, .06), yaw, `${key}_GantrySpan_1`); n++;
+																							box(x, heightBase(x, z) + h + 10, z, 22, 14, 26, accent || tint(color, -.06), yaw, `${key}_GantryTrolley_1`); n++;
+																							return n;
+																							}
+
+																						function gwCraneRail(x, z, len, laneW, railY, yaw, color, key, corbels = 3){
+																							const r = R(yaw), RX = [r.ux, 0, r.uz], UY = [0, 1, 0], BZ = [r.vx, 0, r.vz];
+																							let n = 0;
+																							for (const s of [-1, 1]){
+																								const [bx, bz] = off(x, z, yaw, 0, s * laneW / 2);
+																								orientedBox(bx, railY, bz, len, 6, 10, tint(color, -.10), RX, UY, BZ, `${key}_CraneRail_${s < 0 ? 1 : 2}`); n++;
+																								for (let i = 0; i < corbels; i++){
+																									const [cx, cz] = off(x, z, yaw, (i - (corbels - 1) / 2) * (len / (corbels + 0.6)), s * laneW / 2);
+																									box(cx, railY - 14, cz, 8, 14, 12, tint(color, -.20), yaw, `${key}_CraneCorbel_${s < 0 ? 'A' : 'B'}${i + 1}`); n++;
+																									}
+																									}
+																								return n;
+																								}
+
+																							function gwContainerStack(x, z, yaw, color, key, idx = 1, tiers = 2){
+																								const gy = heightBase(x, z) + 4;
+																								let n = 0;
+																								for (let t = 0; t < tiers; t++){
+																									box(x, gy + t * 16, z, 40, 16, 16, tint(color, t * .05 - .05), yaw, `${key}_Container_${idx}_${t + 1}`); n++;
+																									box(x, gy + t * 16 + 1, z, 3, 14, 17, tint(color, -.24), yaw, `${key}_ContainerRib_${idx}_${t + 1}`); n++;
+																									}
+																									return n;
+																									}
+
+																								// ─── PADDING (11) — low-confidence, use with that understanding ───
+
+																								function gwMitreGate(x, z, yaw, leafColor, key, leafLen = 32, h = 20){
+																									const r = R(yaw);
+																									let n = 0;
+																									for (const s of [-1, 1]){
+																										const ang = s * 14 * Math.PI / 180, lx = Math.cos(ang), lz2 = Math.sin(ang);
+																										const right = [r.ux * lx + r.vx * lz2, 0, r.uz * lx + r.vz * lz2],
+																										back = [-(r.ux * (-lz2) + r.vx * lx), 0, -(r.uz * (-lz2) + r.vz * lx)];
+																										const [mx, mz] = off(x, z, yaw, Math.cos(ang) * 5, s * leafLen / 2);
+																										orientedBox(mx, heightBase(mx, mz) + h / 2, mz, leafLen, h, 5, leafColor,
+																											right, [0, 1, 0], back, `${key}_GateLeaf_${s < 0 ? 1 : 2}`); n++;
+																										}
+																										return n;
+																										}
+
+																									function gwSignalMast(x, z, color, key, h = 58, arms = 2){
+																										const gy = heightBase(x, z);
+																										let n = 0;
+																										cylinder(x, gy, z, 4, h, tint(color, .20), 10, `${key}_SignalMast_1`); n++;
+																										for (let i = 0; i < arms; i++){
+																											box(x, gy + 34 + i * 14, z, 22, 5, 4, tint(color, -.06), 0, `${key}_SignalArm_${i + 1}`); n++;
+																											box(x + 10, gy + 34 + i * 14, z, 5, 5, 5, '#e8e2c6', 0, `${key}_SignalLamp_${i + 1}`); n++;
+																											}
+																											box(x, gy + h, z, 10, 4, 10, tint(color, .14), 0, `${key}_SignalFinial_1`); n++;
+																											return n;
+																											}
+
+																										function gwDerrick(x, z, yaw, color, key, jibLen = 62, mastH = 58){
+																											const r = R(yaw), gy = heightBase(x, z) + 6;
+																											let n = 0;
+																											box(x, gy - 2, z, 26, 8, 26, tint(color, -.20), yaw, `${key}_DerrickBase_1`); n++;
+																											cylinder(x, gy + 6, z, 5, mastH, color, 10, `${key}_DerrickMast_1`); n++;
+																											const jibRise = 26, jl = Math.hypot(jibLen, jibRise),
+																											jr = [r.ux * jibLen / jl, jibRise / jl, r.uz * jibLen / jl],
+																											ju = [-r.ux * jibRise / jl, jibLen / jl, -r.uz * jibRise / jl], jb = [r.vx, 0, r.vz];
+																											const [jmx, jmz] = off(x, z, yaw, jibLen / 2, 0);
+																											orientedBox(jmx, gy + 34 + jibRise / 2, jmz, jl, 6, 7, tint(color, -.08), jr, ju, jb, `${key}_DerrickJib_1`); n++;
+																											const [tipx, tipz] = off(x, z, yaw, jibLen, 0);
+																											box(tipx, gy + 40, tipz, 6, 18, 6, tint(color, -.16), yaw, `${key}_DerrickHoist_1`); n++;
+																											return n;
+																											}
+
+																											function gwSnowShed(x, z, len, yaw, color, key){
+																												let n = 0;
+																												for (const s of [-1, 1]){
+																													const [px, pz] = off(x, z, yaw, s * 26, 0);
+																													box(px, heightBase(px, pz) - 1, pz, 20, 8, len, color, yaw, `${key}_SnowShed_${s < 0 ? 1 : 2}`); n++;
+																													}
+																													return n;
+																													}
+
+																												function gwSolarField(x, z, rows, cols, yaw, color, key){
+																													const gy = heightBase(x, z);
+																													let n = 0;
+																													for (let ri = 0; ri < rows; ri++) for (let ci = 0; ci < cols; ci++){
+																															const [px, pz] = off(x, z, yaw, (ci - (cols - 1) / 2) * 20, (ri - (rows - 1) / 2) * 14);
+																															box(px, gy, pz, 3, 4, 3, tint(color, -.20), yaw, `${key}_PanelPost_${ri}_${ci}`); n++;
+																															box(px, gy + 4, pz, 16, 2, 10, color, yaw, `${key}_PanelArray_${ri}_${ci}`); n++;
+																															}
+																															return n;
+																															}
+
+																													function gwWindrowRow(x, z, len, yaw, color, key, count = 4){
+																														let n = 0;
+																														for (let i = 0; i < count; i++){
+																															const [px, pz] = off(x, z, yaw, 0, -len / 2 + i * (len / (count - 1 || 1)));
+																															box(px, heightBase(px, pz), pz, 18, 10, len / count * 0.8, tint(color, -.04 * i), yaw, `${key}_Windrow_${i + 1}`); n++;
+																															}
+																															return n;
+																															}
+
+																														function gwDrumRack(x, z, yaw, color, key, bays = 2, levels = 2){
+																															const gy = heightBase(x, z), r = R(yaw), RX = [r.ux, 0, r.uz], UY = [0, 1, 0], BZ = [r.vx, 0, r.vz];
+																															let n = 0;
+																															for (let bay = 0; bay < bays; bay++){
+																																const [bx, bz] = off(x, z, yaw, (bay * 2 - 1) * 26, 0);
+																																for (const s of [-1, 1]){
+																																	const [fx, fz] = off(bx, bz, yaw, s * 18, 0);
+																																	box(fx, gy, fz, 5, 40, 5, tint(color, -.20), yaw, `${key}_RackLeg_${bay + 1}${s < 0 ? 'A' : 'B'}`); n++;
+																																	}
+																																	for (let lvl = 0; lvl < levels; lvl++){
+																																		orientedBox(bx, gy + 12 + lvl * 13, bz, 40, 3, 34, tint(color, .04), RX, UY, BZ, `${key}_RackBeam_${bay + 1}_${lvl + 1}`); n++;
+																																		for (let d = 0; d < 2; d++){
+																																			const [ddx, ddz] = off(bx, bz, yaw, (d * 2 - 1) * 11, 0);
+																																			cylinder(ddx, gy + 14 + lvl * 13, ddz, 4.5, 11, tint(color, -.06), 10, `${key}_Drum_${bay + 1}_${lvl + 1}_${d + 1}`); n++;
+																																			}
+																																			}
+																																		}
+																																return n;
+																																}
+
+																															function gwSprinklerLine(x, z, len, yaw, color, key, heads = 4){
+																																const r = R(yaw), RX = [r.ux, 0, r.uz], UY = [0, 1, 0], BZ = [r.vx, 0, r.vz];
+																																const gy = heightBase(x, z) + 10;
+																																let n = 0;
+																																orientedBox(x, gy, z, len, 4, 4, tint(color, -.04), RX, UY, BZ, `${key}_SprinklerLine_1`); n++;
+																																for (let i = 0; i < heads; i++){
+																																	const [hx, hz] = off(x, z, yaw, -len / 2 + i * (len / (heads - 1 || 1)), 0);
+																																	cylinder(hx, gy, hz, 2, 4, tint(color, .10), 8, `${key}_SprinklerHead_${i + 1}`); n++;
+																																	}
+																																	return n;
+																																	}
+
+																																function gwLoaderShed(x, z, w, l, h, yaw, color, key){
+																																	return gwCanopy(x, z, w, l, h, yaw, color, key); // literal alias, no new geometry
+																																	}
+
+																																	function gwAuctionRostrum(x, z, yaw, color, key, canopyColor){
+																																		const gy = heightBase(x, z);
+																																		let n = 0;
+																																		box(x, gy, z, 20, 14, 14, tint(color, .08), yaw, `${key}_AuctionRostrum_1`); n++;
+																																		box(x, gy + 14, z, 24, 3, 18, canopyColor || tint(color, .16), yaw, `${key}_RostrumCanopy_1`); n++;
+																																		return n;
+																																		}
+
+																																		function gwEmergencyShower(x, z, yaw, color, key, warnColor){
+																																			const gy = heightBase(x, z);
+																																			let n = 0;
+																																			box(x, gy - 2, z, 30, 4, 22, tint(color, -.24), yaw, `${key}_WashPad_1`); n++;
+																																			box(x, gy + 2, z, 24, 2, 16, '#2b2f33', yaw, `${key}_WashGrate_1`); n++;
+																																			cylinder(x, gy + 2, z, 2.5, 13, warnColor || color, 8, `${key}_ShowerPost_1`); n++;
+																																			box(x, gy + 15, z, 10, 2, 10, tint(color, .10), yaw, `${key}_ShowerHead_1`); n++;
+																																			return n;
+																																			}
+																																			```
+
+																																				**Kit growth rule, if adding a 51st function**: promote a hand-built
+																																					pattern only after it repeats ≥2 times across real, already-authored
+																																					buildings. Never add speculatively for a building that doesn't exist yet.
+
+																																						---
+
+																																						## 4 · Elevation-chaining — the rule that has caused real bugs
+
+																																						`gwStaged`, `gwStagedShell`, and `gwLeggedDeck` all return an **object**,
+																																						not a number — `{ parts, gy, topY, baseH, bodyH, capH }` (or `{ parts, gy,
+																																							deckY, topY }` for the leg deck). Never hand-compute an elevation by
+																																						summing fractions:
+
+																																						```js
+																																						const sh = gwStagedShell(...);
+																																						n += sh.parts;
+																																						n += gwPitchRoof(..., sh.topY);        // correct
+																																						n += gwPitchRoof(..., gy + h + 14);    // WRONG — floating roof, silent bug
+																																						```
+
+																																						**General contract, applies to any future kit function too**: any function
+																																								whose result something else will stack on top of must return an object
+	carrying at minimum `topY` (and `gy` where a caller might need the base) —
+	never a bare number.
+
+	---
+
+	## 5 · House style rules
+
+	- **1 unit = 1 Roblox stud.** A character is ~5 studs tall.
+	- **Human-scale elements are FIXED, never scaled**: a door is 7×10×1 on a
+	40-stud shed and a 400-stud plant alike. Rail gauge is fixed at 13
+	studs. These are what tell the eye how big everything else is.
+	- **Architectural trim** (ribs, ledges, cornices) scales as
+	`clamp(height * 0.02, 8, 28)` face width, 1–4 stud protrusion. Thinner
+	than 8 studs on its visible face vanishes under Roblox's LOD — fewer,
+	chunkier pieces beat many thin ones.
+	- **Base/body/cap grammar** (via `gwStaged`/`gwStagedShell`): base 8–14%
+	of height flared 3–8 proud and darker; body; cap 3–5% flared 2–6 back
+	out and lighter. Skipped under 90 studs — a single mass is correct
+	there.
+	- **Hollow vs. solid**: hollow (`gwStagedShell`) anything a player walks
+	into — halls, offices, sheds, control rooms — with a real door gap
+	(`opts.door`) and interior detail visible through it
+	(`gwInteriorColumns`, `gwTruss`, a gantry). Solid (`gwStaged`) for
+		vessels and machinery — tanks, silos, crushers — nobody enters those.
+		- **No windows as dark rectangles.** Express facades with structure —
+		ribs, pilasters, recessed bays, panel shade steps. Real openings only
+		where something genuinely opens.
+		- **Deterministic. No `Math.random()`.** Same inputs, identical geometry,
+		always.
+		- **Every structure sits on a `gwSlab`**, 8–20 studs past its footprint.
+		Terrain is triangulated and will poke through an unslabbed wall — and
+		a slab is only as good as the worst-case terrain height it's graded to
+		cover across its own footprint, not just the height at its center point.
+		- **Names are structural**: `GW_<Territory>_<Building>_<Element>_<Index>`,
+		e.g. `GW_North_Crusher_FeedHopper_1`. Same concept, same element word
+		everywhere (Wall, Roof, Pier, Canopy, Stair, Rail, Tank, Stack,
+			Conveyor, Dock, Slab, Band).
+		- **Signature**: `function gw<Territory><Building>(x, z, yaw = 0)`. `x, z`
+		is the ground anchor, `yaw` is degrees. Never hardcode a world position.
+
+		---
+
+		## 6 · Budgets (revised, current)
+
+		| Class | Typical footprint span | Min parts | Max parts |
+		|---|---|---|---|
+		| Small — sheds, booths, kiosks | under ~120 studs | 100 | 300 |
+		| Medium — barns, workshops, silo clusters | ~120–220 studs | 150 | 500 |
+		| Large — plants, halls, terminals, hangars | over ~220 studs | 250 | 500 |
+		| Headquarters — civic seat, one per territory | multi-zone complex | 250 | 500 |
+
+		- **Minimum is a hard floor**, not a suggestion. Under it = not done, just
+		a footprint with a roof.
+		- **Maximum is a hard ceiling.** Get there by simplifying massing, never
+		by raising the number.
+		- **Aim for 70–85% of cap**, not either edge.
+			- This table was originally 1000 for Large/HQ, then revised down — 500 is
+				enough to read as grand without inviting padding for its own sake.
+
+					### Mandatory detail pass, for anything over ~90 studs
+
+						1. Real rib density — pitch under ~45 studs on any wall run over 100
+						studs long.
+						2. `gwEaves` on any pitched or sawtooth roof.
+						3. A catwalk or parapet rail on any walkable deck/cap/platform.
+						4. Yard clutter scaled to footprint.
+						5. **Render it and look at it once** before calling it done — numeric
+						checks (`node --check`, parts-match, unique-names) cannot catch "this
+						reads as an empty blockout."
+
+						### HQ progression
+
+						**5 tiers, not 10** — 10 would average 25–50 parts apart per step, too
+						subtle to read as a visible upgrade at this budget. 5 gives each step a
+						real jump (roughly 250 → 320 → 390 → 460 → 500), and matches the
+						flour-mill 3-state precedent (foundation → frame → working) scaled up.
+						*(See Part II §B below for the full reasoning behind this number.)*
+
+						---
+
+						## 7 · Verification, every batch, no exceptions
+
+						1. `node --check` on the file.
+						2. Every building's returned `parts` value must equal the actual number
+						of primitive calls made — verify with a harness that resets a shared
+						`instances` array, calls the function, and compares
+							`instances.length - before` to `result.parts`.
+							3. Every emitted name must be unique across the whole building — check a
+							`Set` of all names for duplicates.
+								4. Check against the budget table above; apply the detail pass if short
+									of the floor.
+
+									---
+
+									## 8 · Where things actually live
+
+									- **`Groundworks_Main.html`** (was `groundworksss_bsp_step15_building_uses.html`,
+										aka `Groundworks_Prototype_Map_border_connected_short_bridges.html` in
+										this merge's source set) — the real procedural map/city generator.
+										Terrain, roads, rail, civic centre, the Reclamation Spire. **The only
+										file with a working Roblox exporter** (`robloxScript()`).
+										- **`Groundworks_Main_V0.001.html`** (was `groundworks_buildings_v1.html`)
+										— the preset-building catalog/preview tool. Six-primitive kit + 16
+										example buildings in a three.js scene. **No export capability** —
+										preview only, despite the name similarity to the file above.
+										- **`groundworks_batches\`** — everything authored this session:
+										`_harness.js` (Node verification stub of the base kit), `_gw_kit_ext.js`
+										(this file's §3), 5 authored buildings, `_gw_export_roblox.js` (a real
+											exporter ported for those 5 standalone buildings), and
+										`GDD_ADDENDUM_v1.1.md` (longer-form design-decision log, reproduced in
+											full as Part II of this merged file — read that for the *why* behind
+												anything above; this Part I is the *what*).
+
+										Don't confuse the two `Groundworks_Main*` files by name alone — only one
+										of them actually exports.
+
+										---
+
+										## 9 · Interiors
+
+										Added after a measurement pass over `Groundworks_Main.html` (seed 38117)
+										showed the real state of interiors across the whole catalogue:
+
+										- All 20 hand-authored buildings call `gwStagedShell` at least once — every
+										one has a hollow volume.
+										- **All 170 procedurally-generated civic buildings have none.** They are
+										`civicExtrudePolygon` prisms — perimeter walls plus a fan-triangulated
+										roof, no floor (nothing passes `opts.floor`), and their "entrance" is a
+										`_Lobby`/`_MainDoor` box attached to the *outside* of a solid mass.
+
+										So ~89% of the buildings in a generated map are sealed blocks with a door
+										painted on. This section is the standard that fixes that.
+
+										### 9.1 · Every building declares an interior tier
+
+										Add to the returned object, alongside `parts`:
+
+										```
+										interior: 'none' | 'peephole' | 'walkin'
+										```
+
+										- **`none`** — vessels and machinery. Tanks, silos, crushers, stacks.
+										Nobody enters; `gwStaged` (solid) is correct.
+										- **`peephole`** — detail concentrated in the sightline from the door.
+										This is what the kit's existing "interior detail visible through it"
+										language actually describes, and it is the right default for most sheds
+											and small works.
+											- **`walkin`** — the player is expected to be inside. Halls, offices,
+											HQs, control rooms, markets. Requires the full element list in §9.3.
+
+											Declaring the tier is mandatory; `'none'` is a legitimate answer but it
+											must be a deliberate one.
+
+											### 9.2 · Why one shell is not an interior
+
+											`gwStagedShell` produces a single open volume from floor to cap. Correct
+											for a 96-stud hall, badly wrong above that — the East HQ's 260-stud
+												operations tower is an empty chimney with its catwalks on the outside.
+												Three specific failures to fix:
+
+												1. **No floor plates.** Nothing divides any interior vertically.
+												2. **No ceiling.** `gwStagedShell` emits `_Floor_1` but nothing overhead —
+												the cap is a *ring*, not a lid. Looking up shows roof underside or void.
+												3. **Circulation is outside the building.** `gwStairTower` is placed at an
+												offset beyond the shell — and is not stairs anyway: it is a *solid*
+												16x16 box whose landing plates are all emitted at the same
+												`off(x, z, yaw, 0, 10)`, differing only in Y. Stacked shelves inside a
+												solid column. Nothing in the kit is currently climbable.
+
+												### 9.3 · Required elements by tier
+
+												| Element | none | peephole | walkin |
+												|---|---|---|---|
+												| Hollow shell (`gwStagedShell`) with real door gap | — | required | required |
+												| Interior floor | — | required | required |
+												| Interior columns / trusses | — | required | required |
+												| Ceiling or soffit (`gwCeiling`) | — | — | required |
+												| Floor plates per storey (`gwFloorPlate`) | — | — | required above ~120 studs |
+												| Interior circulation (`gwStairRun`) | — | — | required |
+												| Interior lighting | — | 1 fixture | required, see §9.6 |
+												| Partitions (`gwInteriorPartition`) | — | — | where the use implies rooms |
+												| Human-scale fixtures (`gwFixtureRun`) | — | required | required |
+												| Door reveal / jamb / threshold | — | required | required |
+
+												### 9.4 · New kit functions
+
+												Composed from the six primitives. **No subtraction, as everywhere else.**
+
+												- **`gwFloorPlate(x, z, w, l, yaw, color, key, y, opts)`** — deck plus edge
+												beam, with an optional `void` opening built as **four bands around the
+												hole**, not a hole cut in a slab. This is the keystone that turns a
+												single shaft into storeys. Returns `{ parts, topY }` per §4 so plates
+												chain.
+													- **`gwStairRun(x, z, yaw, y0, y1, runLen, color, key, width)`** — angled
+												`orientedBox` flights between landings, the same sloped-frame technique
+												`gwConveyorRun` already uses. Replaces the fiction in `gwStairTower`.
+													- **`gwCeiling(x, z, w, l, yaw, color, key, y)`** — soffit plate plus
+												exposed beams.
+													- **`gwInteriorPartition(...)`** — `gwShellRing` pointed inward. Keep
+												partitions thinner than shell walls (4-5 vs 9) so the hierarchy between
+												structure and division stays legible.
+													- **`gwBayLights(x, z, w, yaw, color, key, ceilY, count)`** — see §9.6.
+												- **`gwFixtureRun(...)`** — counters, benches, shelving.
+
+													Also fix `gwInteriorColumns`: it places every column at `across = 0`, a
+												single centreline row. The East HQ's five columns run straight down the
+												middle of a 200x140 trading floor. Add a `rows` parameter — a grid, or two
+												rows flanking a central aisle, reads as structure instead of decoration.
+
+													### 9.5 · Human scale, inside
+
+												The 7x10x1 door is currently the **only** fixed human-scale element in the
+												entire kit, and there are none at all inside. Interior fixtures are fixed
+												the same way the door is, and never scale with the host building:
+
+													```
+												counter / desk   36 tall
+												bench / seat     18 tall
+												shelf bay        90 tall
+												handrail         42 tall
+												```
+
+												Without these nothing tells the eye how big a hall is once you are in it.
+
+													### 9.6 · Lighting, and why it is the real budget
+
+												`opts.light` has been wired through every primitive and the exporter since
+												the materials pass, and **nothing uses it** except `gwSlab` and the Spire
+												beacons. Until that changes, every interior exports as a black void behind
+												the door and everything in §9.3 is invisible in Roblox.
+
+													But dynamic lights are far more expensive per instance than anchored
+												parts, and the engine limits how many render at once. Budget them, not the
+												geometry:
+
+													- Real `PointLight`/`SpotLight`: **walk-in buildings and the civic core
+												only**, one or two per volume.
+													- Everything else: emissive `Neon` material with no light source. Costs
+	nothing extra to render and still reads as occupied from outside.
+
+		### 9.7 · The procedural city gets a cheaper tier
+
+	170 buildings cannot each have a walk-in interior. Assign a tier at
+	generation time instead:
+
+		- **Ground-floor interior** for anything the player can walk up to — one
+			floor plate, a ceiling at the podium line, and the lobby volume moved
+			*inside* the shell instead of stuck on the outside. A handful of parts
+			each. This is also the first real use for `civicExtrudePolygon`'s
+				existing `floor: true` option, which nothing currently passes.
+				- **Glazed and lit, but sealed** for mid-rise — no interior geometry, but
+					a `transparency`-set clerestory or curtain band plus emissive interior
+					colour, so the mass reads as occupied. Near-zero cost, and the biggest
+					perceived-realism change available across 170 buildings.
+					- **Fully solid** below a size floor or beyond streaming distance.
+
+					Note on the house rule "no windows as dark rectangles": that predates
+					`opts.transparency` and was banning painted-on darkness, not real glazed
+					openings. A glazed clerestory is how an interior becomes visible and lit
+					from outside, and is explicitly allowed.
+
+					### 9.8 · Budget — interiors are not the constraint
+
+					Measured on a generated map (seed 38117, `StreamingTargetRadius` 1024):
+
+					```
+					Total parts                     51,169
+					terrain (TerrainCell/Crater)  39,349   (77%)
+					buildings, roads, props       11,820   (23%)
+
+					Parts within 1024 studs — worst  4,326   at (4000, 2250), 98% terrain
+					p90    2,801
+					median 1,172
+					Civic centre within 1024         1,794   (1% terrain)
+					```
+
+					Only ~30-35 of the 170 civic buildings fall inside any single 1024-stud
+					sphere, so ground-floor interiors at 15-20 parts each add roughly **+500
+					to +700** parts to the worst civic cell against a current 1,794.
+
+					**Working ceiling: 8,000 concurrent parts within 1024 studs**, of which
+					interiors may use 2,000. That is ~2x the current worst cell and still safe
+					on mobile. Interiors are not the budget problem — terrain is 77% of all
+					parts and 98% of the worst streaming cell. If headroom is ever needed the
+					lever is `FLAT_EPS` / `TERRAIN_MIN` / `PARAMS.detailLevel`, not buildings.
+
+					Interior parts are nonetheless the **first** population to carry the
+					prunable/LOD tag (see Part II §A item 11): they are invisible from outside
+					and irrelevant at streaming distance.
+
+					### 9.9 · Verification
+
+					Extend `_verify.js`: any building declaring `interior: 'walkin'` must emit
+					floor plates, a ceiling, interior circulation and at least one light —
+					fail the build otherwise. A standard that lives only in prose lands the way
+					the functionality-tagging layer did: it is marked *required* in all three
+					authoring prompts and four of the five buildings built so far ignore it
+					entirely.
+
+					---
+
+					## 10 · Small building types
+
+					### 10.1 · The measured problem: coverage, not height
+
+					The outer city looked wrong, and the obvious diagnosis — "the buildings are too
+					tall" — was only half right. Measured across the procedural bands:
+
+					```
+					band 3        band 4        band 5
+					lot w x d      130 x 167     151 x 182      98 x 173
+					footprint p50   13,054        16,509        12,972  sq studs
+					COVERAGE p50      0.82          0.80          0.82
+					height p50         320           180           100
+					```
+
+					Every band covered ~80% of its lot — **the same as downtown**. The fringe read
+					as short city blocks because it *was* short city blocks. Lowering the height
+					zones alone could never have fixed it; coverage is the variable.
+
+					Second measurement that shaped the design: **the lots are not small.** A band-5
+					parcel is ~98 x 173 = ~17,000 sq studs. A house is ~40 x 30. One small building
+					on that lot looks abandoned, so small buildings have to come in groups.
+
+					### 10.2 · Principle: a site plan, not a shrunken mass
+
+					The 13 large archetypes all answer *"what shape is the mass that fills this
+					lot."* Small buildings answer a different question: **"how is this lot
+					occupied"** — how many masses, where they sit, and what the leftover ground
+					does. That is the axis with all the variety at this scale, and it was unused.
+
+					### 10.3 · An orthogonal system, not N bespoke functions
+
+					Deliberately built as a table over two dimensions, because the extension kit
+					already demonstrates what happens otherwise: 11 of its 22 functions are marked
+					`PADDING`, added to reach a requested count, one of them a literal alias with
+					no new geometry. A preset here is a table row, not new code.
+
+					- **Layout** (how the lot is divided): `row` · `pair` · `cluster` · `single` · `bar`
+					- **Unit** (what one mass is): `house` · `terraceUnit` · `shed` · `lockUp` · `shopBar`
+					- **Roof**: `gable` · `monopitch`
+					- **Ground**: `garden` · `parking` · `yard` · `hardstand` · `apron`
+
+					### 10.4 · The seven shipped presets
+
+					| Preset | Layout x unit | Units | Height | Roof | Ground | Business |
+					|---|---|---|---|---|---|---|
+					| `terraceRow` | row x terraceUnit | 5-7 | 50-90 | gable | garden | no |
+					| `cottageCluster` | cluster x house | 3-4 | 50-80 | gable | garden | no |
+					| `stripRetail` | bar x shopBar | 4-6 bays | 60-100 | monopitch | parking | **yes** |
+					| `yardWorks` | single x shed | 1 + outbuilding | 60-110 | monopitch | yard | no |
+					| `workshopRow` | row x shed | 3-4 | 70-110 | gable | hardstand | no |
+					| `storageRow` | row x lockUp | 8-12 | 30-45 | monopitch | hardstand | no |
+					| `depotPair` | pair x shed | 2 | 90-150 | gable | apron | no |
+
+					Band 4 draws from stripRetail / yardWorks / workshopRow / depotPair; band 5 adds
+					terraceRow / cottageCluster / storageRow. A parcel already selected as a
+					business (§ role assignment) gets a retail form; a generic parcel does not.
+
+					### 10.5 · Roofs: two tilted slabs, not a triangulation
+
+					The live procedural city had **zero pitched roofs** before this — every mass got
+					`civicExtrudePolygon`'s flat fan roof or a box cap. A gable is the single
+					strongest "this is a small building" signal, so it had to exist.
+
+					It is built as **two tilted `orientedBox` slabs**, not a `gwPitchRoof`-style
+					triangulation. That decomposition costs 12 real parts per roof; on a 7-unit
+					terrace that is 84 parts of roof alone. Two oriented slabs read identically at
+					this scale for **2 parts**. The open triangle at each end is closed with one
+`wedgeFace` per end only where it is large enough to notice.
+
+	`wedgeRoof` is not used, here or anywhere — preview/export mismatch, see §1.
+
+### 10.6 · Human scale finally does visible work
+
+Every unit carries the fixed 7x10x1 door, exactly as everywhere else in the
+	kit. On a 900-stud tower that door is a detail nobody resolves. On a 50-stud
+	cottage it is the thing that says *this building is two people tall* — this is
+	the first place in the city where the fixed-scale rule earns its keep.
+
+		### 10.7 · Measured result
+
+	```
+	before        after
+	small-type buildings         0           74
+	site coverage band 4      0.80         0.146
+	site coverage band 5      0.82         0.112
+	height band 4 (min)        130           60
+	height band 5 (min)         80           30
+	avg parts per small lot      -           11
+	total map parts         53,540       52,890
+	duplicate names              0            0
+	worst cell within 1024   4,326        4,326   (terrain, at 4000/2250)
+	```
+
+	Note the map got **smaller**, not bigger: several small masses plus a ground
+	treatment cost less than one large extruded prism with facade rhythm and roof
+	detail. The streaming worst case is untouched, because it is terrain out at the
+	coast and always was.
+
+		**Coverage overshot into sparse.** The design target was 0.20-0.40 and the
+	result is 0.11-0.15. The lots still read as occupied because the ground
+	treatments (garden / yard / parking / hardstand) fill the unbuilt remainder,
+		but if a denser fringe is wanted the knobs are unit count per row and the
+			back-row trigger depth in `civicBspSmallSiteMassing`.
+
+			### 10.8 · Interiors
+
+			All seven presets are `peephole` tier per §9.1 — one visible room through the
+			door, no floor plates or internal circulation. A `terraceUnit` is 18x34 studs;
+			there is nothing to walk around inside one, and 74 lots x several units each is
+			exactly the population where walk-in interiors would break the part budget for
+				no gain.
+
+				### 10.9 · Adding a preset
+
+				Add a row to `CIVIC_SMALL_PRESETS` and list it in `CIVIC_SMALL_BY_BAND`. No new
+				function. The candidates deliberately *not* built yet, pending evidence that the
+					city needs them: `duplexPair`, `courtyardHousing`, `arcadeRow`, `marketShed`,
+					`forecourtService`, `cornerShop`, `chapel`, `pavilion`, `pumpHouse`,
+					`transitShelter`, `allotments`, `parkingCourt`, `tankCompound`, `backLandInfill`,
+					`walkUpBlock`. The chapel/pavilion/pumpHouse group is the most useful next
+					batch, because the `special` (pink) role currently contains only 4 buildings,
+					all landmark towers.
+
+					---
+
+					# Part II — GDD Addendum v1.1
+
+					*(source: `GDD_ADDENDUM_v1.1.md`, 2026-09-04 — supplement to GDD v1.0)*
+
+					> This does not replace the GDD — it's a supplement covering what came out
+					> of the building-authoring session: a functionality layer the original
+					> document never specified, a resolved HQ-progression question, and real
+					> numeric data (road widths, map scale) pulled from the actual procedural
+					> map tool that the GDD's prose only described qualitatively.
+					> Cross-references below point back to GDD v1.0 section numbers.
+
+					## A. Building functionality layer (new — nothing in v1.0 covers this)
+
+					Every building produced by the kit so far — the 15 in the source tool and
+					the ones authored this session — is **pure static geometry**: unscripted
+					`Part`s with a name, nothing else. That was true of the original 15
+	buildings too; it's not a regression, it's the ceiling of what the
+	six-primitive kit was ever scoped to produce. None of it is playable yet.
+
+		To make buildings actually serve the GDD's loop (§2: extract → process →
+	haul → trade → reinvest) and crew model (§7.1: driver, sorter, machine
+	operator), every building needs a small set of named/tagged anchor points
+layered on top of its geometry — not new kit primitives, just a naming
+convention a gameplay script system can query, the same way the Roblox
+exporter already finds a door by its `_Door_1` name.
+
+	**Sixteen required additions, prioritized:**
+
+	1. **Interaction anchors** (`_Interact_1`) — the one part per building a
+player actually clicks to operate it, so a ProximityPrompt system knows
+where to attach without inspecting 300 parts to guess.
+	2. **Input/output nodes** (`_InputNode_<resource>_1` /
+		`_OutputNode_<resource>_1`) — at hoppers, dock doors, conveyor ends, so
+buildings can be wired into real supply chains (§2.2's closed loop),
+	not just visually implied ones.
+		3. **Worker-station anchors per specialty** — a point + orientation for
+			driver / sorter / machine-operator (§7.1) at every building that needs
+			one. The owner/crew system currently has nowhere to place a worker.
+			4. **Vehicle spawn/parking points** — distinct from the visual dock
+			geometry; §2's "haul" step needs a real vehicle instance (§4: "vehicles
+			are in... the primary way goods and players cross a territory"), not
+			just an apron sized to look truck-shaped.
+			5. **Road-frontage connectors** — a named point where a building's apron
+			meets its nearest road corridor, sized against the real road-width
+			classes below (§C), so placement can be validated or auto-snapped
+			instead of floating near an implied road.
+			6. **Inventory/storage anchor** — one region per building where its goods
+			actually live, since §3 says "inventory is stored at the base and
+			persists between sessions" — no save system currently has anything to
+			attach that to.
+			7. **Type/class metadata as queryable attributes**, not just embedded in
+			the `key` string — territory, building type, class
+			(Small/Medium/Large/HQ/Civic) — so contract/upgrade systems can find
+			"the sorting hall" without string-parsing names.
+			8. **Throughput/capacity tags** on the actual machine part (rotor, press,
+				crusher) — a number the economy system (§5) reads directly instead of
+			inferring output rate from geometry.
+			9. **Milestone-state anchors** — for progressive buildings (the flour mill's
+				foundation → frame → working states, §10.1; now also the 5-tier HQ
+				progression, §B below) — a shared pivot so the game can swap states in
+				place without repositioning anything around it.
+				10. **Hazard-event anchors** — South's fires/spills/blocked-conveyors and
+				North's rockfall/snow closures (§10.2, §10.3) need a specific point to
+				spawn at (the jam point on a conveyor, the leak point on a tank), not
+				"somewhere in this building."
+				11. **LOD / streaming-budget tags.** §8 states the actual binding constraint
+				is part count inside a 1600-stud streaming bubble, and low-detail mode
+				has to cut density, not just view distance — but nothing currently
+				marks which parts are safe to prune. Every rib, catwalk rail-post, and
+				yard-stack tier needs a decorative/prunable flag distinct from
+				structural mass (e.g. the shredder's ~40 rib parts should be strippable
+					on a low-end phone while the hall shell stays intact). Without this
+	tag, "low-detail mode" has no way to know what to cut — and §8's open
+performance-budget question can't be acted on even once measured.
+12. **A claim/ownership anchor per territory, plus a vacant state.** §7.3 is
+explicit that claiming happens at each territory's own front (not the
+civic centre), and that an abandoned territory resets to
+vacant/fresh-starter state and reopens. **No building in any
+territory's authored list (§10.1-10.4, or the batch-1 job's building
+list) is actually a claim kiosk.** South's gatehouse (built this
+session) is a checkpoint, not a claim point — close in spirit, wrong
+function. This is a missing building, not just a missing tag; add
+	"territory claim kiosk" to every territory's building list.
+	13. **Per-instance stable IDs**, distinct from the structural naming
+	convention. `GW_<Territory>_<Building>_<Element>_<Index>` names identify
+	a part's *role within one building of a given type* — it says nothing
+	about *which physical placement* that is. Two silo clusters in the same
+	territory emit identical part names. Save-slot persistence (§3) and the
+	claim/ownership system (§7.3, item 12) both need a per-instance ID that
+	survives across sessions and distinguishes "this specific placed
+	building" from every other building of the same type — the structural
+	names alone can't carry that.
+	14. **Pathfinding clearance.** Every anchor something needs to *reach*
+		(interact points, worker stations, vehicle spawns, road-frontage
+			connectors, hazard-response points) is currently just a coordinate, with
+	no guaranteed clear path from the nearest road to it. Some of what's
+	already built plausibly violates this — yard-dressing calls
+	(`gwYardStack`, `gwBollardRun`, `gwFenceRun`, `gwPipeRack`) were placed
+	for visual density with no clearance envelope reserved around any
+		anchor (the shredder's bollard run sits close to the magnet deck's
+			discharge conveyor path, for instance). Each anchor needs an explicit
+		approach-corridor width, keyed to who/what needs to reach it (a worker
+			on foot needs `pedestrianPath` width from §C's table; a hauling truck
+			needs `forkliftMain` or wider) — and the yard-dressing kit functions
+		need documented minimum clearances they must respect around any anchor
+		they're placed near.
+		15. **Trade/market interface anchors, distinct from production interact
+		points.** Item 1 covers "the part a player clicks to operate a
+		machine" — but the Commodity Market, Contract Exchange, and Auction
+		House (§6.1, v1-priority) need a different anchor kind, tagged with
+			*what it trades* (accepted resource types, a price-tier reference), not
+		"operate this." Nothing currently distinguishes "press this to run the
+		shredder" from "open this to sell scrap" — a market UI system needs
+		that distinction and doesn't have it.
+		16. **Status/state indicators.** Every building built so far is
+		permanently static — nothing shows whether a machine is running, idle,
+			or jammed. This matters specifically because of hazards (item 10,
+				§10.2's fires/spills/blocked-conveyors): a hazard event with no visual
+				feedback isn't a hazard, it's an invisible stat penalty. Needs a
+				taggable part (e.g. `_StatusLight_1`) near each machine's interact
+				anchor that a script can recolor — green/idle-grey/red-jammed — so the
+				signature machine per class (§2.1) reads as working or broken at a
+				glance, not just in a menu.
+
+				None of these sixteen require new kit primitives or extension-kit functions
+				— they're a naming/attribute convention applied to parts the kit already
+				knows how to emit. They do require updating the three authoring prompts
+					(`PROMPT_1/2/3_*.txt`) to require them going forward, and retrofitting the
+					four buildings already built this session (gatehouse, shredder, screen
+						house, East HQ).
+
+					**Adjacent, flagged but explicitly out of scope for the building kit:** step
+						1 of the core loop (§2) is "extract... from your own ground" — but
+						extraction in three of four territories comes from *terrain* (quarry claim
+							faces, §10.3; farm fields, §10.1), not buildings. Nothing in this pipeline
+						marks a claim/field boundary or connects one to a building's input node
+						(item 2). That's a land-parcel system gap, not something six-primitive
+						building geometry should solve — but it's the literal first step of the
+						core loop and currently has zero representation anywhere. Worth someone
+						owning; not this kit.
+
+						## B. Headquarters progression: 5 tiers (resolves an open question)
+
+						Each territory's headquarters (§6, §6.1: "the four HQs... face" the central
+						landmark) upgrades through **5 tiers**, not 10. Reasoning, tied to numbers
+		already fixed elsewhere in this addendum set:
+
+			- The HQ part budget is a hard 250-500 cap (per `DESIGN_GUIDELINES_ADDENDUM.md`
+				§1). Ten tiers would average ~25-50 parts apart per step — too subtle to
+		read as a visible upgrade from across the plaza. Five tiers gives each
+		step a real jump (roughly 250 → 320 → 390 → 460 → 500).
+			- This matches the precedent the GDD already sets with the flour mill's
+		3-state progression (foundation → frame → working, §10.1) — 5 tiers is
+		the same idea, scaled up for a longer-lived, higher-stakes building, not
+			a new pattern invented from nothing.
+				- Authoring cost scales linearly with tier count: 5 tiers × 4 territories =
+				20 verified structures; 10 tiers would be 40, for no additional gameplay
+					signal the GDD's progression model (§2, §7) actually calls for.
+
+					Each tier needs a milestone-state anchor (item 9 above) so the swap doesn't
+					require repositioning the surrounding plaza/wings/tower.
+
+					## C. Real map data, pulled from the procedural tool's own code
+
+					The GDD's §1/§4/§9 map-scale figures are prose placeholders
+					("75,000-stud... an earlier 50,000-stud figure conflicts with it"). The
+					actual procedural map tool
+					(`groundworksss_bsp_step15_building_uses.html`, present in this merge's
+						source set as `Groundworks_Prototype_Map_border_connected_short_bridges.html`)
+					has real numbers already coded, and they **do not match either GDD
+						figure** — verified directly in the file's source at the time of this
+						merge (`const CORE_R=800,CIVIC_CITY_R=2500,REALM_DEPTH=3950,
+							MAP_R=CORE_R+REALM_DEPTH,RAIL_R=MAP_R-300,WATER_R=MAP_R*1.9;` and the
+							`ROAD_WIDTHS` table below, both present verbatim):
+
+						```
+						CORE_R = 800            // civic core radius
+						CIVIC_CITY_R = 2500      // civic city ring
+						REALM_DEPTH = 3950       // how far each territory realm extends past the core
+						MAP_R = CORE_R + REALM_DEPTH = 4750   // outer edge of a territory realm
+						RAIL_R = MAP_R - 300 = 4450
+						WATER_R = MAP_R * 1.9 = 9025          // ocean disc, decorative only, not playable
+						```
+
+						That's a **4,750-stud playable radius** (each territory only reaches 3,950
+						studs out from the core) — roughly **8-16x smaller** than the GDD's stated
+75,000/50,000-stud figures. No larger playable-radius constant exists
+anywhere else in that file; the only bigger number (`WATER_R`) is ocean, not
+	land. **This is now a harder blocker than the GDD's own §9.9 phrasing
+	suggests** — it's not just an open modeling question, the actual generator
+	code has already committed to a specific (small) number that contradicts the
+	design doc. Resolve which figure is authoritative before authoring any more
+	buildings at territory scale, since building footprint budgets in
+	`DESIGN_GUIDELINES_ADDENDUM.md` were set with no map-scale reference at all.
+
+		**Road widths** (also real, also previously undocumented in the GDD, from
+			the same file's `ROAD_WIDTHS` table):
+
+			| Class | Width (studs) |
+			|---|---|
+			| heavyHaul | 140 |
+			| majorIndustrial | 104 |
+			| industrialCollector | 76 |
+			| truckWarehouse | 54 |
+			| forkliftMain | 34 |
+			| forkliftService | 22 |
+			| pedestrianBoulevard | 18 |
+			| pedestrianPath | 10 |
+			| tinyFootpath | 6 |
+
+			Plus setbacks: `CIVIC_ROAD_SETBACK=14`, `CIVIC_BSP_PARCEL_SETBACK=12`,
+			`CIVIC_BSP_PARCEL_GAP=5`, `CIVIC_BSP_PARCEL_MIN_AREA=9000` sq studs.
+
+			**Civic building height zones**, same file (`CIVIC_BSP_HEIGHT_ZONES`), for
+				comparison against what we've built: Central skyline 500-900 (landmarks
+				900-1100), Inner downtown 350-700, Mid-rise belt 220-500, Outer transition
+	100-300. The East HQ (298 studs tall) sits comfortably in "Inner downtown"
+	territory by the tool's own numbers — sizes built this session don't need
+	rework, but item 5 above (road-frontage connectors) does, since nothing
+	built so far was positioned against these real widths.
+
+		The tool's own HQ placeholder — `hqBlockSize:[200, 50, 200]` — is the crude
+	8-part `wedgeRoof`-based block already disqualified earlier (preview/export
+		mismatch, no functional detail). Superseded by the real headquarters being
+	authored under `PROMPT_3_HEADQUARTERS.txt` and the 5-tier system in §B above.
+
+		## D. Open questions this addendum resolves or sharpens
+
+	Renumbered against GDD v1.0 §9:
+
+		- **§9.9 (map scale, 50k vs 75k)** — sharpened, not resolved. See §C above:
+		the actual coded map tool commits to neither figure; it uses 4,750. Pick
+	one of the three before more territory-scale work happens.
+		- **§9.5 (performance budget)** — still open, but now actionable: item 11
+	(§A) gives a tagging mechanism to act on the budget once it's measured.
+	Without the tag, a measured budget number still can't be enforced.
+	- **New, not in original 9**: no territory currently has an authored claim
+	kiosk building (§A item 12) — add to each territory's building list
+	before claiming (§7.3) can be implemented at all.
+		- **New, not in original 9**: extraction (§2 step 1) has no physical
+	representation for the three terrain-sourced classes (§A, "adjacent"
+		note above) — a land-parcel/claim-boundary system, not a building-kit
+		problem, but currently owned by nobody.
+			- **New, not in original 9**: no per-instance ID scheme exists (§A item 13)
+		— blocks both save-slot persistence (§3) and claim/ownership (§7.3) from
+		distinguishing two buildings of the same type.
+
+			## E. Real Roblox export capability — corrected, and a working exporter added
+
+			**Correcting an earlier claim in this session:** `groundworks_buildings_v1.html`
+		has **no Roblox export capability at all**. It is a browser preview/authoring
+		tool only — its own title says so ("Preset buildings v1"). It renders the kit
+			and its 16 buildings in three.js with an orbit camera and a part-count panel,
+			and nothing more. An earlier statement this session implied it could export
+		via the Spire being added to it; that was wrong. Adding a building to
+		`v1.html` makes it previewable there, not exportable.
+
+			**The only file with a real, working Roblox exporter is
+		`groundworksss_bsp_step15_building_uses.html`** (`robloxScript()`,
+			~line 5646) — a genuinely production-quality Lua generator: batched
+		building with `task.wait()` pacing so Studio doesn't hitch, automatic
+		teardown/replace of a previous export, `Enum.PartType` handling for
+			cylinders/balls, `CFrame.fromMatrix` for oriented parts, and a packed
+				`DATA` table (not one closure per part) specifically to stay under Luau's
+				per-chunk closure limit at high part counts.
+
+					**A real bug found while building an exporter for this session's
+							standalone-authored buildings:** `v1.html`'s `wedgeFace()` — which
+							`_harness.js` had copied verbatim — only stores the raw triangle
+							(`a`, `b`, `c`) for preview. It never computes an actual oriented part, so
+								it was never exportable, only previewable. The BSP file's `wedgeFace()` is a
+								different, correct implementation: it decomposes the triangle into two
+								properly-oriented WedgeParts with real `pos`/`size`/`right`/`up`/`back`.
+								**`_harness.js` has been updated to the BSP file's version.** Consequence:
+								`wedgeFace` now emits two real parts per call instead of one, so
+								`gwPitchRoof`'s `return 6` (six `wedgeFace` calls) is now 12 real WedgeParts
+								on export, and the same 2x applies to `gwArchRoof` and `gwSawtoothRoof`.
+								This under-counting was always latent in the kit — it just had no
+								consequence until something tried to actually export a roof. The kit
+								functions' returned `parts` numbers are correct for `node --check`-style
+verification (matching what the *preview* stub calls), but now understate
+real Roblox part count for any roof-bearing building by roughly (wedgeFace
+	call count) parts. Not fixed at the kit-function level — that would mean
+		changing `gwPitchRoof`/`gwArchRoof`/`gwSawtoothRoof`'s own accounting, which
+		this addendum flags but does not do. **(Note: Part I §1 and §2 above show
+			this now fixed at the source in `_harness.js` — see the "not just
+			documented" resolution described in §F below.)**
+
+				**New tool: `_gw_export_roblox.js`**, in `groundworks_batches/`. A port of
+			`robloxScript()` for buildings authored as standalone Node modules this
+				session (which had no export path at all before this — `_harness.js` was
+					verification-only). Run with `node _gw_export_roblox.js [output.lua]`; it
+				builds a fixed set of this session's buildings, spaces them out, and writes
+				a paste-into-Command-Bar Lua script. First real export: 1,028 actual parts
+				across the gatehouse, shredder, screen house, East HQ, and Spire — as
+				`groundworks_session_export.lua`.
+
+					**Practical takeaway for anyone running the three job prompts:** buildings
+						authored under `PROMPT_1/2/3_*.txt` still have no export path by default —
+						they're Node modules against `_harness.js`, same as before. If real Roblox
+						output matters for a batch, either (a) extend `_gw_export_roblox.js` to
+							include the new buildings, or (b) pasting them into `v1.html` still only
+							buys a preview, not an export — the paste target for real output is
+								conceptually the BSP file's approach (or this session's standalone
+								exporter), not `v1.html`.
+
+				## F. Materials, transparency, and lights — added to every primitive, everywhere
+
+			Following on from §E: colour alone was never enough for a real Roblox
+				export — every part was exporting with the default `Plastic` material, no
+				transparency, and no light sources, regardless of what it actually
+				represented (a concrete slab reading identically to a glass pane). Fixed
+				across **all three files** — `_harness.js`, `groundworks_buildings_v1.html`,
+					and the BSP file — not just the standalone exporter, per explicit
+				direction that everything already built should use the primitives, not a
+				one-off patch.
+
+					**What changed.** Every one of the six primitives (`box`, `orientedBox`,
+						`wedgeRoof`, `cylinder`, `ball`, `wedgeFace`) now accepts an optional
+				trailing `opts` object: `{ material, transparency, light }`.
+					- `material` — an `Enum.Material` name string. If omitted, inferred
+				automatically (see below).
+					- `transparency` — 0–1, defaults to 0.
+				- `light` — `{ type:'Point'|'Spot', color, brightness, range, angle }`,
+					spawns a matching light instance as a child of the part when exported
+				(and, in `v1.html`'s three.js preview, in the live preview too).
+
+					This is **fully backward-compatible** — `opts` is trailing and optional, so
+					every existing call to every primitive across all ~90 buildings authored so
+					far still works unchanged. Nothing needed to be rewritten; every primitive
+					call just started getting a real material by inference instead of no
+					material at all.
+
+						**Material inference.** A `MATERIAL_TABLE` maps known base palette hex
+					colours (the ones actually used across East/North/South/West/Civic) to a
+					sensible `Enum.Material`. Since `tint()` is used on nearly every call
+					(base/body/cap shading, rib/downpipe darkening, etc.), an exact-hex hit is
+					rare — the real work is a **nearest-neighbor RGB-distance match** against
+					that table, which correctly classifies tinted shades of a known colour.
+						Only when nothing is reasonably close does it fall back to a coarse
+					hue/lightness bucket. One structural exception: `gwSlab` always sets
+					`material:'Concrete'` explicitly — a slab is definitionally a poured pad
+					regardless of what colour it's tinted to match the building above it, and
+					colour-based inference has no way to know that (an early test showed a
+						darkened red-rock-toned slab getting inferred as "Wood," since that
+						darkened shade happens to sit almost exactly on top of the unrelated barn-
+							red "Wood" table entry in RGB space — a real, structural limitation of
+						colour-only inference, not a bug to keep chasing per-case).
+
+						**The wedgeFace bug, and why fixing it mattered here too.** `v1.html`'s
+					`wedgeFace()` (which `_harness.js` had copied verbatim, per §E) only ever
+					stored the raw triangle for preview — never a real oriented part. It's now
+						been replaced in `_harness.js` **and** in `v1.html` with the BSP file's
+						correct decomposition (two properly-oriented WedgeParts per triangle, with
+							real `pos`/`size`/`right`/`up`/`back`). Direct consequence: `wedgeFace` now
+						emits **two** real parts per call instead of one, so `gwPitchRoof`'s
+						`return 6` (six `wedgeFace` calls) was undercounting — now corrected to
+						`return 12` in both files. Same fix applied to `gwSawtoothRoof` and
+							`gwArchRoof`'s internal counters. This was **not** just documented as a
+						caveat this time (as §E did) — it's fixed at the source, and every
+						verification script (`_verify.js`, `_verify_hq.js`, `_verify_spire.js`) now
+						passes cleanly again with the corrected counts. The BSP file's own
+						`wedgeFace` was already correct and didn't need this fix.
+
+							**Preview vs. export scope, by file:**
+							- `_harness.js` + `_gw_export_roblox.js` — full round-trip: opts are
+						captured, and the exporter emits `Material`, `Transparency`, and a real
+						`PointLight`/`SpotLight` child for any part with `light` set. Verified —
+							the Spire's beacon now carries an actual `Neon` material and a
+							`PointLight` in the exported Lua.
+								- `groundworks_buildings_v1.html` — opts are captured on every instance
+								*and* reflected in the live three.js preview (transparent materials via
+									`MeshLambertMaterial.transparent`/`opacity`, real `THREE.PointLight`/
+									`SpotLight` objects added as children of the mesh). Still has no
+							exporter (see §E) — this is preview-only, but a materially richer
+							preview than before.
+								- The BSP file — opts are captured on every instance and wired all the way
+							through the real `robloxScript()` exporter (`applyCommon()` now sets
+								`Material`/`Transparency` and spawns light children). **Deliberately
+							scoped out:** live transparency/lighting in this file's own preview
+							renderer, which is a hand-rolled raw-triangle WebGL pipeline (not
+								three.js) — going deeper there risked destabilizing code this session
+							doesn't fully own, for a preview-only payoff, when the file's real value
+							is its exporter. The `quad()`/`tri()` render calls are colour-only and
+								untouched; only the instance descriptors that feed the exporter changed.
+
+								**All three files' Spire beacons** (`_gw_civic_spire.js`, `v1.html`,
+							BSP file) now use `material:'Neon'` and a real `Point` light — the one
+				concrete demonstration this session shipped of the new capability.
+
+					**Not done, flagged for whoever picks this up next:** no building authored
+						before this addendum uses `opts` explicitly anywhere except `gwSlab` and
+						the three Spire beacons — every other part across ~90 buildings is still
+						running on inferred material only. That's correct behavior, not a bug, but
+						a building that specifically needs an explicit override (glass windows,
+							neon signage, a lit control-room interior) won't get one until an author
+						passes `opts` on that specific call.
+
+						---
+
+						# Appendix — Source cross-check notes (from this merge)
+
+						While consolidating, `Groundworks_Prototype_Map_border_connected_short_bridges.html`
+						was checked directly for the numbers Part II §C quotes. Confirmed present
+							verbatim in the file:
+
+							- `const CORE_R=800,CIVIC_CITY_R=2500,REALM_DEPTH=3950,
+							MAP_R=CORE_R+REALM_DEPTH,RAIL_R=MAP_R-300,WATER_R=MAP_R*1.9;`
+							- A `ROAD_WIDTHS` object and `ROAD_SIZE_PRESET`/`DIRT_ROAD_SIZE_PRESET`
+							derived from it, matching the table in Part II §C exactly.
+							- An inline comment in the file itself citing "the GDD (Sec 10.1)" for
+								East territory's river ownership — confirming the file and the GDD are
+								meant to be read together, as this merge now does directly.
+								- The file's `<title>` is "Groundworks ALL PROMPTS — Prototype Map",
+								distinct from both `Groundworks_Main.html`/`Groundworks_Main_V0.001.html`
+								names used in Part I §8 — same underlying generator/exporter role,
+								different working filename in this local copy. Treat it as the
+								"BSP file" referenced throughout Part II.
+
+								No numeric conflicts were found between the two source documents — Part I
+								and Part II agree everywhere they overlap (HQ tiers, budgets, map data).
+								The open item is the one both parts already flag: **the map-scale number
+								itself (§C) still needs a decision**, not a documentation fix — this merge
+								does not resolve it, only puts both source documents' framing of it in one
+								place.
+								]]
