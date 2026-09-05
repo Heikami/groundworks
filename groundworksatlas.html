@@ -1,0 +1,1812 @@
+<title>Groundworks Production Atlas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Zilla+Slab:wght@500;600;700&display=swap">
+<style>
+:root{
+  --paper:#e8e9e2; --surface:#f6f7f2; --surface-2:#dfe1d8; --line:#c7cabd;
+  --ink:#1b231e; --ink-2:#495049; --muted:#727a71;
+  --grain:#a8761b; --pasture:#4f7f3c; --tide:#1f6f80; --clay:#a84e34; --util:#6d6b83;
+  --shadow:0 1px 0 rgba(27,35,30,.06), 0 6px 22px -14px rgba(27,35,30,.4);
+  --f-display:"Zilla Slab",Georgia,serif;
+  --f-body:"IBM Plex Sans",-apple-system,Segoe UI,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#111512; --surface:#1a1f1b; --surface-2:#232a24; --line:#333c35;
+    --ink:#e7eae1; --ink-2:#b3bcb1; --muted:#8b958a;
+    --grain:#d8a63f; --pasture:#7fb063; --tide:#4fa7ba; --clay:#d4795a; --util:#9d9ab8;
+    --shadow:0 1px 0 rgba(0,0,0,.4), 0 8px 26px -14px rgba(0,0,0,.9);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#111512; --surface:#1a1f1b; --surface-2:#232a24; --line:#333c35;
+  --ink:#e7eae1; --ink-2:#b3bcb1; --muted:#8b958a;
+  --grain:#d8a63f; --pasture:#7fb063; --tide:#4fa7ba; --clay:#d4795a; --util:#9d9ab8;
+  --shadow:0 1px 0 rgba(0,0,0,.4), 0 8px 26px -14px rgba(0,0,0,.9);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding:0 22px}
+a{color:inherit}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0}
+.eyebrow{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+
+/* ---------- masthead ---------- */
+header.mast{border-bottom:1px solid var(--line);background:var(--surface)}
+.mast-in{display:flex;flex-wrap:wrap;gap:20px 40px;align-items:flex-end;justify-content:space-between;padding:26px 0 22px}
+h1{font-size:clamp(28px,4vw,42px);font-weight:700;letter-spacing:-.015em;line-height:1.05}
+h1 .sub{display:block;font-family:var(--f-mono);font-size:12px;font-weight:400;letter-spacing:.16em;text-transform:uppercase;color:var(--grain);margin-bottom:9px}
+.lede{max-width:52ch;color:var(--ink-2);font-size:15px}
+.tallies{display:flex;gap:26px;font-family:var(--f-mono)}
+.tally b{display:block;font-size:24px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1}
+.tally span{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+
+/* ---------- the fix ---------- */
+.fix{padding:34px 0 8px}
+.fix-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:14px;margin-bottom:6px}
+.fix-head h2{font-size:24px;font-weight:600;letter-spacing:-.01em}
+.tag{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;border-radius:3px;background:var(--clay);color:#fff}
+.fix p.intro{max-width:68ch;color:var(--ink-2);margin:10px 0 22px}
+.fix p.intro em{color:var(--ink);font-style:normal;border-bottom:1.5px solid var(--grain)}
+
+.domains{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:5px;overflow:hidden}
+.dom{background:var(--surface);padding:16px 18px 18px}
+.dom h3{font-size:13px;font-family:var(--f-mono);font-weight:500;letter-spacing:.11em;text-transform:uppercase;margin-bottom:12px}
+.dom.land h3{color:var(--pasture)} .dom.both h3{color:var(--grain)} .dom.sea h3{color:var(--tide)}
+.dom ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:9px}
+.dom li{display:grid;grid-template-columns:12px 1fr;gap:9px;font-size:13.5px;line-height:1.4}
+.dom li i{font-style:normal;font-family:var(--f-mono);font-size:11px;color:var(--muted);padding-top:2px}
+.dom li b{font-weight:600}
+.dom li s{text-decoration:none;display:block;color:var(--muted);font-size:12.5px}
+.dom li.new b{color:var(--tide)}
+.dom li.new::after{content:"NEW";font-family:var(--f-mono);font-size:9px;letter-spacing:.1em;background:var(--tide);color:#fff;padding:2px 4px;border-radius:2px;align-self:start;margin-left:-4px}
+.dom.sea li.new{grid-template-columns:12px 1fr auto}
+
+.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(268px,1fr));gap:22px 34px;margin:26px 0 4px}
+.rule{border-top:2px solid var(--ink);padding-top:11px}
+.rule:nth-child(2){border-top-color:var(--tide)}
+.rule:nth-child(3){border-top-color:var(--grain)}
+.rule.gap{border-top-color:var(--clay)}
+.rule.gap h4{color:var(--clay)}
+.rule h4{margin:0 0 5px;font-family:var(--f-display);font-size:16px;font-weight:600}
+.rule p{margin:0;font-size:13.5px;color:var(--ink-2)}
+.rule code{font-family:var(--f-mono);font-size:12.5px;background:var(--surface-2);padding:1px 5px;border-radius:3px;color:var(--ink)}
+
+.scale{margin:28px 0 0;border:1px solid var(--line);border-radius:5px;background:var(--surface);overflow-x:auto}
+.scale table{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
+.scale caption{text-align:left;padding:14px 18px 4px;font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.scale th,.scale td{padding:8px 18px;text-align:left;border-top:1px solid var(--line)}
+.scale th{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.scale td:first-child{font-weight:600}
+.scale td.n{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-weight:600}
+.scale td.n.pos{color:var(--tide)} .scale td.n.neg{color:var(--clay)}
+.scale td:last-child{color:var(--ink-2)}
+
+/* ---------- graph ---------- */
+.atlas{margin:44px 0 0;border-top:1px solid var(--line);background:var(--surface)}
+.atlas-bar{max-width:1180px;margin:0 auto;padding:16px 22px;display:flex;flex-wrap:wrap;gap:14px 26px;align-items:center;justify-content:space-between}
+.filters{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.filters .lbl{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-right:4px}
+button.chip{font-family:var(--f-mono);font-size:11.5px;letter-spacing:.03em;padding:5px 10px;border:1px solid var(--line);background:transparent;color:var(--ink-2);border-radius:3px;cursor:pointer;transition:background .13s,color .13s,border-color .13s}
+button.chip:hover{border-color:var(--ink-2);color:var(--ink)}
+button.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+button.chip.mode[aria-pressed="true"]{background:var(--clay);border-color:var(--clay);color:#fff}
+button.chip.codex[aria-pressed="true"]{background:var(--tide);border-color:var(--tide);color:#fff}
+button.chip[data-sys="water"][aria-pressed="true"]{background:var(--tide);border-color:var(--tide);color:#fff}
+button.chip[data-sys="soil"][aria-pressed="true"],button.chip[data-sys="poll"][aria-pressed="true"],button.chip[data-sys="pest"][aria-pressed="true"]{background:var(--pasture);border-color:var(--pasture);color:#fff}
+button.chip[data-sys="food"][aria-pressed="true"],button.chip[data-sys="gas"][aria-pressed="true"]{background:var(--grain);border-color:var(--grain);color:#fff}
+button.chip:focus-visible,.node-btn:focus-visible{outline:2px solid var(--grain);outline-offset:2px}
+.searchbox{display:flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:3px;padding:4px 9px;background:var(--paper)}
+.searchbox input{border:0;background:transparent;color:var(--ink);font-family:var(--f-mono);font-size:12px;width:150px;outline:none}
+.searchbox svg{flex:none;opacity:.5}
+
+.stage{position:relative;border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:
+  linear-gradient(var(--paper),var(--paper));height:min(74vh,760px);overflow:hidden;cursor:grab;touch-action:none}
+.stage.drag{cursor:grabbing}
+canvas{display:block;width:100%;height:100%}
+.hint{position:absolute;left:14px;bottom:12px;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.06em;color:var(--muted);pointer-events:none;background:color-mix(in srgb,var(--paper) 80%,transparent);padding:4px 7px;border-radius:3px}
+.zoomers{position:absolute;right:14px;bottom:12px;display:flex;gap:5px}
+.zoomers button{width:28px;height:28px;font-family:var(--f-mono);font-size:14px;line-height:1;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:3px;cursor:pointer}
+.zoomers button:hover{border-color:var(--ink-2)}
+
+#tip{position:absolute;pointer-events:none;opacity:0;transform:translate(-50%,-100%);transition:opacity .1s;z-index:5;
+  max-width:340px;background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--grain);
+  border-radius:4px;padding:9px 12px 10px;box-shadow:var(--shadow)}
+#tip .k{font-family:var(--f-mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+#tip .t{font-family:var(--f-display);font-size:15px;font-weight:600;margin:2px 0 1px;line-height:1.2}
+#tip .r{font-family:var(--f-mono);font-size:11px;color:var(--ink-2);margin-bottom:6px}
+#tip .w{font-size:12.5px;line-height:1.45;color:var(--ink-2)}
+#tip .stats{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;margin:7px 0 8px;
+  padding:7px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+  font-family:var(--f-mono);font-size:11px;font-variant-numeric:tabular-nums}
+#tip .stats span{color:var(--muted);letter-spacing:.04em}
+#tip .stats b{color:var(--ink);font-weight:600;text-align:right}
+#tip .stats b.neg{color:var(--clay)} #tip .stats b.good{color:var(--pasture)}
+#tip .sys{display:flex;flex-wrap:wrap;gap:4px;margin:-2px 0 8px}
+#tip .sys i{font-style:normal;font-family:var(--f-mono);font-size:10px;letter-spacing:.03em;
+  padding:2px 5px;border-radius:2px;background:var(--surface-2);color:var(--ink-2)}
+#tip .sys i.hi{background:var(--grain);color:#fff}
+#tip .sys i.dn{background:var(--clay);color:#fff}
+
+/* ---------- inspector ---------- */
+.panels{max-width:1180px;margin:0 auto;padding:22px;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:26px;align-items:start}
+@media(max-width:820px){.panels{grid-template-columns:1fr}}
+.insp h3{font-family:var(--f-display);font-size:21px;font-weight:600;letter-spacing:-.01em}
+.g{font-family:"Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif;font-size:1em;line-height:1}
+.g.sm{font-size:.95em;opacity:.95}
+#tip .t .g{margin-right:2px}
+.insp .kind{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.insp .note{margin:9px 0 16px;color:var(--ink-2);font-size:13.5px;max-width:60ch}
+.bars{display:grid;grid-template-columns:auto 1fr auto;gap:5px 11px;align-items:center;max-width:430px;margin-bottom:18px}
+.bars .bn{font-family:var(--f-mono);font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-2);white-space:nowrap}
+.bars .bt{position:relative;height:7px;border-radius:1px;background:var(--surface-2);overflow:hidden}
+.bars .bt i{position:absolute;top:0;bottom:0;display:block;border-radius:1px}
+.bars .bt.ctr{background:linear-gradient(90deg,var(--surface-2) 0 calc(50% - 1px),var(--line) calc(50% - 1px) calc(50% + 1px),var(--surface-2) calc(50% + 1px) 100%)}
+.bars .bt.na{background:repeating-linear-gradient(-45deg,var(--surface-2) 0 4px,transparent 4px 8px)}
+.bars .bv{font-family:var(--f-mono);font-size:11.5px;font-variant-numeric:tabular-nums;color:var(--ink-2);min-width:26px;text-align:right}
+.bars .bv.na{color:var(--muted)}
+.flows{display:grid;gap:14px}
+.flow h4{margin:0 0 6px;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.flow ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px}
+.node-btn{display:grid;grid-template-columns:9px 1fr;gap:9px;align-items:baseline;width:100%;text-align:left;background:transparent;border:0;border-bottom:1px solid var(--line);padding:6px 2px;cursor:pointer;color:var(--ink);font:inherit}
+.node-btn:hover{background:var(--surface-2)}
+.node-btn .dot{width:7px;height:7px;border-radius:50%;align-self:center}
+.node-btn .item{font-family:var(--f-mono);font-size:12px}
+.node-btn .to{color:var(--muted);font-size:12.5px}
+.node-btn .to b{color:var(--ink-2);font-weight:500}
+.legend{background:var(--surface);border:1px solid var(--line);border-radius:5px;padding:16px 18px}
+.legend h4{margin:0 0 11px;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.legend .grp{display:flex;flex-direction:column;gap:7px;margin-bottom:16px}
+.legend .grp:last-child{margin-bottom:0}
+.legend .row{display:grid;grid-template-columns:34px 1fr;gap:10px;align-items:center;font-size:12.5px;color:var(--ink-2)}
+.legend .row b{color:var(--ink);font-weight:500}
+.legend svg{overflow:visible}
+
+.model{padding:40px 0 6px;border-top:1px solid var(--line);margin-top:38px}
+.eqn{font-family:var(--f-mono);font-size:14px;line-height:2.05;background:var(--surface);
+  border:1px solid var(--line);border-left:3px solid var(--grain);border-radius:4px;
+  padding:16px 20px;margin:20px 0 6px;overflow-x:auto}
+.eqn b{color:var(--grain);font-weight:600}
+.eqn i{color:var(--muted);font-style:normal}
+.eqn .l{color:var(--ink);font-weight:600}
+.families{display:flex;flex-wrap:wrap;gap:7px;margin:14px 0 0}
+.fam{font-family:var(--f-mono);font-size:11.5px;border:1px solid var(--line);border-radius:3px;
+  padding:5px 9px;background:var(--surface)}
+.fam b{color:var(--clay);font-weight:600;letter-spacing:.04em}
+.verdict{margin-top:22px;border-top:2px solid var(--grain);padding-top:12px;max-width:70ch}
+.verdict b{font-size:17px;font-family:var(--f-display)}
+
+.tiers{display:grid;grid-template-columns:repeat(auto-fit,minmax(238px,1fr));gap:1px;
+  background:var(--line);border:1px solid var(--line);border-radius:5px;overflow:hidden;margin:22px 0 0}
+.tier{background:var(--surface);padding:15px 17px 17px}
+.tier .n{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.tier h4{margin:5px 0 3px;font-family:var(--f-display);font-size:19px;font-weight:600}
+.tier .how{font-family:var(--f-mono);font-size:11.5px;color:var(--ink-2);margin-bottom:9px}
+.tier ul{margin:0;padding-left:16px;font-size:13px;color:var(--ink-2);display:flex;flex-direction:column;gap:4px}
+.tier.t0 h4{color:var(--muted)} .tier.t1 h4{color:var(--grain)} .tier.t2 h4{color:var(--pasture)}
+
+.econ{margin-top:22px;border:1px solid var(--line);border-radius:5px;background:var(--surface);overflow:hidden}
+.econ-bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line)}
+.econ-bar .lbl{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-right:4px}
+.econ-wrap{overflow-x:auto;max-height:520px;overflow-y:auto}
+table.et{border-collapse:collapse;width:100%;min-width:880px;font-size:12.5px}
+table.et th{position:sticky;top:0;z-index:1;background:var(--surface-2);font-family:var(--f-mono);font-size:10px;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);font-weight:500;text-align:right;
+  padding:9px 12px;cursor:pointer;white-space:nowrap;border-bottom:1px solid var(--line)}
+table.et th:first-child,table.et th:nth-child(2){text-align:left}
+table.et th:hover{color:var(--ink)}
+table.et th[data-dir]::after{content:" \2193";color:var(--grain)}
+table.et th[data-dir="1"]::after{content:" \2191";color:var(--grain)}
+table.et td{padding:7px 12px;text-align:right;border-bottom:1px solid var(--line);
+  font-variant-numeric:tabular-nums;font-family:var(--f-mono);white-space:nowrap}
+table.et td.nm{text-align:left;font-family:var(--f-body);font-weight:500}
+table.et td.tr{text-align:left;font-size:11px;color:var(--muted)}
+table.et tbody tr:hover{background:var(--surface-2)}
+table.et td.neg{color:var(--clay)} table.et td.good{color:var(--pasture)}
+.econ-foot{padding:11px 16px;font-size:12px;color:var(--muted);border-top:1px solid var(--line)}
+footer{border-top:1px solid var(--line);margin-top:30px;padding:20px 0 40px;color:var(--muted);font-size:12.5px}
+footer p{margin:0 0 6px;max-width:78ch}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}
+</style>
+
+<header class="mast">
+  <div class="wrap mast-in">
+    <div>
+      <h1><span class="sub">Groundworks · Design Reference</span>Production Atlas</h1>
+      <p class="lede">Every crop, cover, animal, aquatic species and building in the roster, wired by what actually moves between them — and a repair to the scoring model so the coast stops being graded on soil.</p>
+    </div>
+    <div class="tallies">
+      <div class="tally"><b id="t-nodes">—</b><span>Entities</span></div>
+      <div class="tally"><b id="t-edges">—</b><span>Flows</span></div>
+      <div class="tally"><b>6</b><span>Systems</span></div>
+    </div>
+  </div>
+</header>
+
+<section class="wrap fix">
+  <div class="fix-head"><span class="tag">Problem 1 · fixed</span><h2>Systems are domain-scoped, and water quality is signed</h2></div>
+  <p class="intro">The five systems broke at the waterline: an oyster's real service is nutrient removal, and scoring that as <em>Soil&nbsp;5</em> is biologically nonsense — while kelp performs neither pollination nor terrestrial pest control. The repair is not to bolt a sixth number onto all fifty buildings. It is to <em>scope each system to a domain</em> and let entities be graded only on the systems they can physically act in.</p>
+
+  <div class="domains">
+    <div class="dom both">
+      <h3>Universal · scored everywhere</h3>
+      <ul>
+        <li><i>01</i><span><b>Food</b><s>Edible or saleable output entering the market chain.</s></span></li>
+        <li><i>02</i><span><b>Biogas &amp; Organic Recovery</b><s>Digestible or compostable residue, graded on collectability — not mass. Slurry beats pasture.</s></span></li>
+      </ul>
+    </div>
+    <div class="dom land">
+      <h3>Land domain only</h3>
+      <ul>
+        <li><i>03</i><span><b>Soil</b><s>Nitrogen, organic matter, structure, cover. Applied to the <em>following</em> crop, not the farm.</s></span></li>
+        <li><i>04</i><span><b>Pollination</b><s>Flowering resource and managed colony support.</s></span></li>
+        <li><i>05</i><span><b>Pest &amp; Weed Pressure</b><s>Competition, allelopathy, beneficial-insect habitat.</s></span></li>
+      </ul>
+    </div>
+    <div class="dom sea">
+      <h3>Water domain only</h3>
+      <ul>
+        <li class="new"><i>06</i><span><b>Water Quality &amp; Nutrient Recovery</b><s>Dissolved nitrogen and particulate load added to, or filtered out of, a coastal lease.</s></span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="rules">
+    <div class="rule">
+      <h4>Inapplicable is not zero</h4>
+      <p>An entity shows <code>—</code> on systems outside its domain and is never penalised for them. Ranking uses share of <em>applicable</em> maximum, so a four-system land crop and a three-system oyster lease compete on the same footing.</p>
+    </div>
+    <div class="rule">
+      <h4>Water quality runs −3 to +5</h4>
+      <p>It is the only signed system. Fed species load the water; extractive species strip it. A lease's <code>net</code> is the sum of everything inside it, so a salmon pen alone sits negative and has to be paid for.</p>
+    </div>
+    <div class="rule gap">
+      <h4>Closed gap: Pest &amp; weed was one entity deep</h4>
+      <p>Cereal rye was the only entity scoring 4+, against four to seven in every other system — a system the player solves once and never revisits. Fixed by promoting <b>buckwheat</b> and <b>forage radish</b> to 4 on the weed-suppression evidence already gathered, and adding <b>brown mustard</b> as a biofumigant brassica at 5. Rye now has rivals with different second jobs, so the choice is a real rotation decision rather than a scripted one.</p>
+    </div>
+    <div class="rule">
+      <h4>Amphibious buildings score in both</h4>
+      <p>The Aquaponics Greenhouse, Compost Facility, Biogas Plant and Market Hall touch land and water chains, so they carry values on both sides. Nothing else does — this is a small set, deliberately.</p>
+    </div>
+  </div>
+
+  <div class="scale">
+    <table>
+      <caption>System 06 · reference values on the current aquatic roster</caption>
+      <thead><tr><th>Entity</th><th>Water</th><th>Food</th><th>Biogas</th><th>Basis</th></tr></thead>
+      <tbody>
+        <tr><td>Eastern oyster</td><td class="n pos">+5</td><td class="n">3</td><td class="n">1</td><td>Needs no feed after the hatchery; filters phytoplankton and removes excess nutrients.</td></tr>
+        <tr><td>Sugar kelp</td><td class="n pos">+5</td><td class="n">2</td><td class="n">3</td><td>Recovers dissolved nutrients directly; no feed, no seed stock after outplanting.</td></tr>
+        <tr><td>Blue mussel</td><td class="n pos">+4</td><td class="n">3</td><td class="n">1</td><td>Filter feeder, commonly farmed beside finfish to absorb culture nutrients.</td></tr>
+        <tr><td>Rainbow trout</td><td class="n neg">−2</td><td class="n">4</td><td class="n">2</td><td>Fed species. Inside aquaponics the plants recover it, so the greenhouse nets to zero.</td></tr>
+        <tr><td>Atlantic salmon</td><td class="n neg">−3</td><td class="n">5</td><td class="n">2</td><td>Fed marine net-pen culture. The strongest food score on the coast, and the largest load.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="wrap model">
+  <div class="fix-head"><span class="tag" style="background:var(--grain)">Design layer</span><h2>The throughput model</h2></div>
+  <p class="intro">Food stops being a sixth stat sitting beside the others. It becomes the <em>output</em>, and the five service systems become the terms that multiply it — so ignoring soil, pollination, pest, energy or water quality costs real money instead of nothing. None of the constants below come from the research; they are the design layer, tuned to make a good rotation worth roughly twice a bad one.</p>
+
+  <div class="eqn">
+<span class="l">yield</span>  = base_yield &times; <b>soil_mult</b> &times; (1 &minus; <b>pest_loss</b>)<br>
+<span class="l">revenue</span> = yield &times; base_price &times; <b>quality_mult</b><br>
+<span class="l">net</span>    = revenue &minus; (energy_cost &times; <b>energy_mult</b>) &minus; labour<br>
+<span class="l">slots</span>  = floor(base_slots &times; (1 + 0.15 &times; <b>net_water</b>))   <i>// marine leases</i>
+  </div>
+
+  <div class="scale">
+    <table>
+      <caption>What each system controls</caption>
+      <thead><tr><th>System</th><th>Term</th><th>Formula</th><th>Range</th></tr></thead>
+      <tbody>
+        <tr><td>Soil</td><td class="n">soil_mult</td><td>1 + 0.12 &times; field.soil</td><td class="n">0.64 – 1.60</td></tr>
+        <tr><td>Pest &amp; weed</td><td class="n">pest_loss</td><td>clamp(0.20 &minus; 0.035 &times; field.pest, 0.02, 0.45)</td><td class="n">2% – 31% lost</td></tr>
+        <tr><td>Pollination</td><td class="n">quality_mult</td><td>1 + 0.09 &times; poll_state <i>(dependent crops only)</i></td><td class="n">1.00 – 1.45</td></tr>
+        <tr><td>Biogas</td><td class="n">energy_mult</td><td>1 &minus; 0.06 &times; digester_capacity</td><td class="n">1.00 – 0.70</td></tr>
+        <tr><td>Water quality</td><td class="n">net_water</td><td>&Sigma; water scores inside the lease</td><td class="n">&minus;3 – +5 per unit</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="rules">
+    <div class="rule">
+      <h4>Fields carry state, crops do not</h4>
+      <p>Every field holds <code>soil</code> and <code>pest</code>, each clamped to <code>&minus;3 … +5</code>. At harvest the crop applies <code>delta = score &times; 0.4</code>. At the start of each season both values drift 10% back toward zero. This is what makes the effect land on the <em>next</em> crop rather than acting as a farm-wide buff.</p>
+    </div>
+    <div class="rule">
+      <h4>Repeating a family bites</h4>
+      <p>Plant the same crop family twice in a row and the field takes an extra <code>&minus;1.5 pest</code>, while any positive soil delta is halved. Stacking, so a third repeat hurts more. This is the rule that makes mustard-after-cabbage a mistake the game can actually express.</p>
+    </div>
+    <div class="rule">
+      <h4>Soil and pest are signed now</h4>
+      <p>Corn and potato sit at <code>&minus;2</code> soil, cabbage at <code>&minus;2</code> pest, and overstocked pasture flips sheep negative. Without a negative half you cannot build a bad farm, only a less-good one — and diversification wins by default instead of by beating something.</p>
+    </div>
+  </div>
+
+  <div class="families">
+    <span class="fam"><b>CEREAL</b> wheat · barley · corn · cereal rye</span>
+    <span class="fam"><b>LEGUME</b> field pea · red clover · alfalfa</span>
+    <span class="fam"><b>BRASSICA</b> cabbage · brown mustard · forage radish</span>
+    <span class="fam"><b>SOLANACEAE</b> potato · tomato</span>
+    <span class="fam"><b>ALLIUM</b> onion</span>
+    <span class="fam"><b>APIACEAE</b> carrot</span>
+    <span class="fam"><b>OTHER</b> buckwheat · lettuce · basil</span>
+  </div>
+
+  <div class="scale" style="margin-top:26px">
+    <table>
+      <caption>Worked example · the same corn seed on the same field, three histories</caption>
+      <thead><tr><th>Field history</th><th>soil</th><th>pest</th><th>soil_mult</th><th>pest_loss</th><th>Yield</th></tr></thead>
+      <tbody>
+        <tr><td>Corn, third year running</td><td class="n neg">&minus;1.37</td><td class="n neg">&minus;2.03</td><td class="n">0.836</td><td class="n neg">27.1%</td><td class="n neg">61</td></tr>
+        <tr><td>Fresh ground, no history</td><td class="n">0.00</td><td class="n">0.00</td><td class="n">1.000</td><td class="n">20.0%</td><td class="n">80</td></tr>
+        <tr><td>Red clover, then cereal rye</td><td class="n pos">+3.06</td><td class="n pos">+2.45</td><td class="n">1.367</td><td class="n pos">11.4%</td><td class="n pos">121</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="verdict">
+    <p><b>A 2&times; spread on identical seed.</b> Sixty-one against a hundred and twenty-one, decided entirely by what the player planted in the two seasons before. That gap is the whole argument for the rotation system — and it only exists because the scales run negative.</p>
+  </div>
+</section>
+
+<section class="wrap model">
+  <div class="fix-head"><span class="tag" style="background:var(--tide)">Design layer</span><h2>Knowledge &amp; discovery</h2></div>
+  <p class="intro">The model is deep on purpose, but a player handed six systems and two hidden field variables on day one will read the result as randomness rather than skill. So knowledge is <em>earned per entity</em>: plant a thing to see what happened, study it to learn why. Complexity arrives at the pace the player buys it, and the research buildings that had no economic role finally get one.</p>
+
+  <div class="tiers">
+    <div class="tier t0">
+      <div class="n">Tier 0</div><h4>Unknown</h4>
+      <div class="how">never planted or caught</div>
+      <ul><li>Name and silhouette only</li><li>No scores, no family, no chain</li><li>Its flows are hidden from the codex</li></ul>
+    </div>
+    <div class="tier t1">
+      <div class="n">Tier 1</div><h4>Observed</h4>
+      <div class="how">harvested at least once</div>
+      <ul><li>The outcome, always: <em>&ldquo;61, down from 80&rdquo;</em></li><li>Field state as a band and arrow — <em>Tired&nbsp;&darr;</em></li><li>Its direct flows appear in the codex</li><li>No numbers, no mechanism</li></ul>
+    </div>
+    <div class="tier t2">
+      <div class="n">Tier 2</div><h4>Studied</h4>
+      <div class="how">researched at a laboratory</div>
+      <ul><li>The six system scores, signed</li><li>Crop family tag, so repeats are predictable</li><li>A forecast <em>before</em> planting, not after</li><li>Full entry in the codex</li></ul>
+    </div>
+  </div>
+
+  <div class="scale" style="margin-top:26px">
+    <table>
+      <caption>Who studies what · four buildings that previously had no economic role</caption>
+      <thead><tr><th>Building</th><th>Studies</th><th>Costs</th><th>Turnaround</th></tr></thead>
+      <tbody>
+        <tr><td>🔬 Field Laboratory</td><td>Crops, cover crops, soil and pest state</td><td>1 unit of harvest + a field sample</td><td>1 season</td></tr>
+        <tr><td>🛸 Drone Dock</td><td>Lifts every owned field to Observed at once</td><td>Flight hours, repeatable</td><td>Immediate</td></tr>
+        <tr><td>🩺 Veterinary Clinic</td><td>Livestock and their manure handling</td><td>1 herd visit</td><td>1 season</td></tr>
+        <tr><td>🔭 Coastal Research Station</td><td>Aquatic species and the water column</td><td>Water sample + 1 harvest unit</td><td>1 season</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="rules">
+    <div class="rule gap">
+      <h4>Hide the explanation, never the consequence</h4>
+      <p>Observed always shows what happened. Gate the <em>why</em>, never the <em>what</em> — a player who cannot see that yield fell has been handed the randomness problem this system exists to solve.</p>
+    </div>
+    <div class="rule gap">
+      <h4>Never gate the escape route</h4>
+      <p>A player who has wrecked a field and cannot afford the laboratory must still be able to recover. <em>Tired&nbsp;&darr;</em> is enough to know to change something, even without knowing what clover does. Research buys precision, not survival.</p>
+    </div>
+    <div class="rule">
+      <h4>The codex is this atlas</h4>
+      <p>The player's reference is the same graph, revealed node by node: dashed rings for never planted, faded for observed, full colour and glyph for studied. Chain view becomes <em>&ldquo;what do I know connects to this?&rdquo;</em> Press <b>Codex</b> above to see an early save.</p>
+    </div>
+  </div>
+</section>
+
+<section class="wrap model">
+  <div class="fix-head"><span class="tag" style="background:var(--pasture)">Design layer</span><h2>Costing &amp; unlock order</h2></div>
+  <p class="intro">Every entity priced off one spine: a season is 28&nbsp;days, a year is four seasons. Only the base figures are authored — cost, cycle length, yield, unit price and running cost. Prices then follow a progression curve rather than a flat scale: the multiplier is <code>20 &times; 2.1^step</code>, so each step costs about twice the last and the economy spans <b>900 to 51M</b> across ten steps. Owning one of everything costs <b>320,021,300</b>, a completed farm earns roughly <b>147,477,910 a year</b>, and reaching a billion takes about <b>five further years of full output</b> — a millionaire well before the endgame, a billionaire only long past it. Cost and revenue take the same multiplier, so margin and payback are identical to the unscaled model. <em>Margin, per-day return and payback are all derived</em>, so the sheet cannot drift out of agreement with itself. Seed, spat and weaners are treated as cost of goods and charged every cycle; buildings, leases, orchards and breeding stock are capital and amortise across five years.</p>
+  <div class="econ">
+    <div class="econ-bar">
+      <span class="lbl">Show</span>
+      <button class="chip ek" data-k="all" aria-pressed="true">All</button>
+      <button class="chip ek" data-k="crop" aria-pressed="false">Crops</button>
+      <button class="chip ek" data-k="tree" aria-pressed="false">Orchard</button>
+      <button class="chip ek" data-k="stock" aria-pressed="false">Livestock</button>
+      <button class="chip ek" data-k="aqua" aria-pressed="false">Aquatic</button>
+      <button class="chip ek" data-k="bldg" aria-pressed="false">Buildings</button>
+      <button class="chip ek" data-k="util" aria-pressed="false">Utilities</button>
+    </div>
+    <div class="econ-wrap">
+      <table class="et">
+        <thead><tr>
+          <th data-s="n">Entity</th><th data-s="step">Step</th><th data-s="t">Chapter</th><th data-s="cost">Cost</th>
+          <th data-s="cycle">Cycle</th><th data-s="rev">Revenue</th><th data-s="run">Costs</th>
+          <th data-s="profit">Profit</th><th data-s="margin">Margin</th><th data-s="day">Per day</th>
+          <th data-s="pay">Payback</th><th data-s="sup">Fields</th><th data-s="up">Upgrades</th>
+        </tr></thead>
+        <tbody id="etb"></tbody>
+      </table>
+    </div>
+    <div class="econ-foot">Cycle in days. Payback in days, shown for capital only — recurring entries show return on the seed or stock instead. <b>Fields</b> is how many average fields it takes to run a building at capacity. Upgrades are L2 and L3: cost, then output multiplier.</div>
+  </div>
+
+  <div class="rules">
+    <div class="rule">
+      <h4>Unlocks are derived, not authored</h4>
+      <p>There is no separate tech tree to maintain. <b>A building opens one step after the earliest thing that can feed it</b> — the Creamery because you have a Dairy Barn making milk, the Cider House because you have apples. 75 entities are gated this way, permits included — and because the permits are themselves chain-gated, the gates cannot be bought around. Twenty-five have nothing upstream at all (utilities, the nursery, the leases) and are gated by chapter and cost instead, and the twenty-one organisms open when you can buy seed or stock.</p>
+    </div>
+    <div class="rule">
+      <h4>Not everything has a prerequisite</h4>
+      <p><b>Exponential rewards cannot be gated by price.</b> With each step earning several times the last, saving up stops nobody — fifteen entities at step&nbsp;3 or later had no prerequisite at all, including a crop worth 130&times; the opening plot. Five <b>permits</b> close it: Field Deed, Livestock Licence, Orchard Deed, Utility Permit and Coastal Lease Permit, each issued by buildings the farm already operates, so the gates cannot be bought around. Nothing at step&nbsp;3 or later is skippable now, and the 14 still ungated are the opening plots and services — the tree prints their price instead of a parent line.</p>
+    </div>
+    <div class="rule">
+      <h4>107 edges, not 223</h4>
+      <p>Most flows keep an existing building busy rather than opening a new one. Filtering to just the prerequisites cuts the graph by <b>52%</b>, and the result is verified <em>acyclic</em>: no entity is ever its own ancestor. 75 entities are opened by a chain and only 12 by cost alone. Ten steps, deepened by the permits themselves. <b>Every valid route is drawn, not merely the earliest</b> — the Biogas Plant opens on kitchen waste, dairy slurry <em>or</em> pig slurry, and a tree that showed only the first would be lying about the design.</p>
+    </div>
+    <div class="rule">
+      <h4>Where it stops being a tree</h4>
+      <p>54 entities have exactly one prerequisite — those parts really are a tree. The other 21 converge: <b>Grain Silos</b> opens on any of wheat, barley, corn or field pea; the <b>Biogas Plant</b> on kitchen waste, dairy slurry or pig slurry; the <b>Market Hall</b> on the packhouse, cellar or coop. Service edges are deliberately <em>not</em> gates: the Field Laboratory samples wheat and the vet visits the herd, which are services about a thing rather than requirements for it. Counting them once put wheat at step&nbsp;7, behind the Utility Permit. Those convergences are the whole reason two players reach the same building by different routes.</p>
+    </div>
+    <div class="rule">
+      <h4>One input opens it — except its namesake</h4>
+      <p>A building opens on any single input and gains its other recipes later; requiring all of them would gate the Bakery behind the entire farm. <b>The exception is a processor named for its input.</b> Six are: the Bakery needs flour, the Creamery milk, the Cider House apples, the Butchery the loading yard, the Flour Mill wheat, the Aquaculture Processing Plant the packing house. Without that rule the Bakery opened on eggs alone, with no flour anywhere on the farm.</p>
+    </div>
+    <div class="rule gap">
+      <h4>Red clover is the only entity that loses money</h4>
+      <p>Deliberately. It costs <code>1,740</code> in seed and returns about <code>1,160</code>, a loss of roughly <code>928</code> a cycle. It earns its place through the next crop: clover into rye into corn lifts that corn from 80 units to 121, worth about <code>+7,146</code>. <b>A 7&times; return, paid one season late.</b> If any crop should teach the rotation system, it is the one with a red number on it.</p>
+    </div>
+    <div class="rule">
+      <h4>Processors need feeding</h4>
+      <p>A field yields about <code>0.75</code> units a day averaged across the roster, so the <b>Fields</b> column says how much farm a building actually needs. Build the Flour Mill too early and it idles — that constraint, not the build cost, is what should gate the mid game.</p>
+    </div>
+  </div>
+</section>
+
+<section class="atlas">
+  <div class="atlas-bar">
+    <div class="filters">
+      <span class="lbl">View</span>
+      <button class="chip mode" data-mode="layered" aria-pressed="true">Tiers</button>
+      <button class="chip mode" data-mode="rings" aria-pressed="false">Rings</button>
+      <button class="chip mode" data-mode="threeD" aria-pressed="false">3D</button>
+      <button class="chip mode" data-mode="systems" aria-pressed="false">Systems</button>
+      <button class="chip mode" data-mode="chain" aria-pressed="false">Chain</button>
+      <button class="chip mode" data-mode="unlock" aria-pressed="false">Unlock</button>
+      <button class="chip codex" id="codexBtn" aria-pressed="false" title="Show the atlas as a player would see it early in a run">Codex</button>
+      <span class="lbl" style="margin-left:16px">System</span>
+      <button class="chip" data-sys="food" aria-pressed="false">Food</button>
+      <button class="chip" data-sys="soil" aria-pressed="false">Soil</button>
+      <button class="chip" data-sys="poll" aria-pressed="false">Pollination</button>
+      <button class="chip" data-sys="pest" aria-pressed="false">Pest</button>
+      <button class="chip" data-sys="gas" aria-pressed="false">Biogas</button>
+      <button class="chip" data-sys="water" aria-pressed="false">Water</button>
+    </div>
+    <div class="searchbox">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="5" cy="5" r="3.6"/><path d="M7.7 7.7 11 11"/></svg>
+      <input id="q" type="search" placeholder="find an entity" aria-label="Find an entity">
+    </div>
+  </div>
+  <div class="stage" id="stage">
+    <canvas id="cv"></canvas>
+    <div id="tip" role="status"></div>
+    <div class="hint">Tiers run left to right · drag to pan · scroll to zoom · hover a line to read the flow · click a node to inspect</div>
+    <div class="zoomers"><button id="zo" title="Zoom out">−</button><button id="zi" title="Zoom in">+</button><button id="zr" title="Reset view" style="width:auto;padding:0 8px;font-size:10px;letter-spacing:.08em">FIT</button></div>
+  </div>
+</section>
+
+<div class="panels">
+  <div class="insp">
+    <div class="kind" id="i-kind">Entity</div>
+    <h3 id="i-name">—</h3>
+    <p class="note" id="i-note"></p>
+    <div class="bars" id="i-bars"></div>
+    <div class="flows">
+      <div class="flow"><h4>Receives</h4><ul id="i-in"></ul></div>
+      <div class="flow"><h4>Sends</h4><ul id="i-out"></ul></div>
+    </div>
+  </div>
+  <aside class="legend">
+    <h4>Reading the atlas</h4>
+    <div class="grp" id="lg-nodes"></div>
+    <h4>Flow types</h4>
+    <div class="grp" id="lg-edges"></div>
+  </aside>
+</div>
+
+<footer class="wrap">
+  <p><b>Sourced:</b> chain structure, storage lives, pollination requirements, feed-grain shares, manure/biogas suitability, straw–mushroom substrate and salmon/shellfish production stages come from the research set (USDA ERS &amp; Rural Development, SARE, UMN Extension, Oklahoma State Extension, EPA AgSTAR, Cornell Small Farms, NOAA).</p>
+  <p><b>Design, not source:</b> the entire throughput model above — every constant, the field-state and crop-family rules, all 0–5 values, the signed −3…+5 scales, domain scoping, tier placement and the proposed Salmon Pen / Marine Lease are game-design decisions built on that evidence, not findings from it.</p>
+</footer>
+
+<script>
+/* ============================ DATA ============================ */
+/* k: crop | cover | tree | fungus | stock | aqua | bldg | site | util | system
+   c: world x column. s: [food,soil,poll,pest,gas,water]  null = not applicable */
+const N = [
+ // --- utilities & services (col 90) ---
+ {id:"well",n:"Well",k:"util",c:90,s:null,note:"Groundwater source. No biological input — a utility, and that is fine."},
+ {id:"desal",n:"Desalination Plant",k:"util",c:90,s:null,note:"Coastal freshwater. Power-hungry; pairs with the microgrid."},
+ {id:"solar",n:"Solar Microgrid",k:"util",c:90,s:null,note:"Electricity for the energy-heavy buildings: cold storage, vertical farm, hydroponics, desalination."},
+ {id:"wind",n:"Wind Turbine",k:"util",c:90,s:null,note:"Second power source; complements solar on a different daily curve."},
+ {id:"workshop",n:"Equipment & Service Workshop",k:"util",c:90,s:null,note:"Keeps robotics, drones and vehicles running. Service economy, not a food chain."},
+ {id:"fieldlab",n:"Field Laboratory",k:"util",c:90,s:null,note:"Takes soil and tissue samples, not commodities. Should reveal the hidden Soil state of a field rather than produce anything."},
+ {id:"vet",n:"Veterinary Clinic",k:"util",c:90,s:null,note:"Herd and flock health. Multiplies livestock output instead of consuming a commodity."},
+ {id:"nursery",n:"Greenhouse Nursery",k:"bldg",c:90,s:[0,1,1,0,0,null],note:"Seedlings and saplings. The only way to establish orchard trees and transplanted vegetables."},
+ {id:"hayseed",n:"Hay & Seed Storage Barn",k:"bldg",c:90,s:[1,2,1,1,0,null],note:"Holds cover-crop seed and baled forage — the bottleneck that makes rotation planning a real decision."},
+ {id:"estate",n:"Farm Estate & Management Office",k:"util",c:90,s:null,note:"Admin. Needs a non-agricultural mechanic: contracts, claims, staffing."},
+ {id:"kiosk",n:"Claim Kiosk",k:"util",c:90,s:null,note:"Land claims. Non-agricultural by design."},
+ {id:"housing",n:"Player Worker Housing",k:"util",c:90,s:null,note:"Labour capacity. Consumes provisions rather than producing."},
+ {id:"robotics",n:"Agricultural Robotics Depot",k:"util",c:90,s:null,note:"Field automation. Reduces labour cost per hectare."},
+ {id:"drone",n:"Drone Dock",k:"util",c:90,s:null,note:"Scouting and mapping — the natural partner for the Field Laboratory's hidden soil state."},
+ {id:"boathouse",n:"Boathouse & Net Loft",k:"util",c:90,s:null,note:"Gear rather than biology: nets, cages, longlines, rafts for the leases."},
+ {id:"keeper",n:"Lighthouse Keeper's Cottage",k:"util",c:90,s:null,note:"Staffs the lighthouse. One of the clearest cases for a non-agricultural economic loop."},
+ {id:"lighthouse",n:"Lighthouse",k:"util",c:90,s:null,note:"Safe passage for the coastal fleet. Pure service asset."},
+ {id:"coastres",n:"Coastal Research Station",k:"util",c:90,s:[0,null,null,null,0,2],note:"Samples and data. Should read the lease's net water score and unlock the extractive species."},
+ {id:"irrig",n:"Irrigation Pump House",k:"util",c:90,s:null,note:"Moves water to fields. No biological input."},
+ {id:"tower",n:"Water Tower",k:"util",c:90,s:null,note:"Pressure and buffer storage between source and use."},
+
+ // --- cover & support crops (col 430) ---
+
+
+ // --- permits: the gates that make a per-tier curve survivable ---
+ {id:"permitfield",n:"Field Deed",k:"util",c:90,s:null,note:"Rights to break ground beyond the three starting plots. The first thing a player earns rather than buys."},
+ {id:"permitstock",n:"Livestock Licence",k:"util",c:90,s:null,note:"Consent to keep animals. Feed and veterinary cover already gate the herd; the licence is what makes it a chapter rather than a purchase."},
+ {id:"permitgrove",n:"Orchard Deed",k:"util",c:90,s:null,note:"Title to plant perennials and keep bees. Trees take years to bear, so the deed makes that a commitment rather than an impulse."},
+ {id:"permitgrid",n:"Utility Permit",k:"util",c:90,s:null,note:"Connection rights for glass and power. The greenhouses are the first entities earning hundreds of times a starting plot."},
+ {id:"permitcoast",n:"Coastal Lease Permit",k:"util",c:90,s:null,note:"Access to the water. The single largest gate in the game - everything seaward sits behind it."},
+
+ {id:"redclover",n:"Red clover",k:"cover",c:430,s:[1,5,3,2,2,null],note:"Green manure fixing roughly 70–150 lb N/acre. SARE trials found corn following red clover performed comparably to heavily N-fertilised corn — the single strongest basis for a Soil mechanic in the roster."},
+ {id:"alfalfa",n:"Alfalfa",k:"cover",c:430,s:[1,4,3,1,3,null],note:"Deep-rooted perennial legume. Doubles as the primary baled forage, so it earns its slot twice."},
+ {id:"buckwheat",n:"Buckwheat",k:"cover",c:430,s:[1,2,5,4,1,null],note:"Establishes and flowers fast with abundant blossom, pulling in pollinators and beneficial insects while covering ground quickly. It covers soil fast enough to smother weeds too — a genuine second job, so it now scores 4 on Pest as well as 5 on Pollination. Still placed under Pollination, because that is where it is strongest."},
+ {id:"cerealrye",n:"Cereal rye",k:"cover",c:430,s:[1,4,0,5,2,null],note:"Scavenges leftover nitrogen, holds soil over winter, and suppresses weeds both competitively and allelopathically. The deliberate opposite of buckwheat: high pest, no pollination."},
+ {id:"radish",n:"Forage radish",k:"cover",c:430,s:[1,3,1,4,1,null],note:"Fast autumn biomass and an aggressive taproot: it smothers weeds and opens the profile in one pass. Best value in a mix — legume plus rye or radish combines nitrogen supply with nitrogen retention better than either alone."},
+ {id:"mustard",n:"Brown mustard",k:"cover",c:430,s:[1,3,3,5,1,null],note:"The biofumigant brassica. Incorporated residue suppresses weeds and soilborne pests, and the yellow bloom feeds pollinators on the way. It also breaks a cereal-legume rotation with a third crop family — so never plant it against cabbage. DESIGN ADDITION: biofumigation is established agronomy, but it is not in the sourced research set, unlike everything else on this roster."},
+ {id:"bee",n:"European honey bee",k:"stock",c:430,s:[3,1,5,1,0,null],note:"The manageable pollination unit, but never the whole of pollination: baseline wild pollination exists without an apiary, and the colonies are a bonus on top."},
+
+ // --- field, veg, orchard, stock, aquatic (col 790) ---
+ {id:"wheat",n:"Wheat",k:"crop",c:790,s:[5,0,0,0,3,null],note:"The principal food grain and the densest node in the roster: flour, bread, silage-free bulk storage, export, milling byproducts for feed, and straw for mushrooms."},
+ {id:"barley",n:"Barley",k:"crop",c:790,s:[3,0,0,0,3,null],note:"One of the four major feed grains, plus a second straw source. A cleaner export/feed grain than a food grain."},
+ {id:"corn",n:"Corn",k:"crop",c:790,s:[4,-2,0,-1,4,null],note:"Over 95% of feed-grain use — corn should wire fields straight to animals through the mill, and never need a processor of its own."},
+ {id:"fieldpea",n:"Field pea",k:"crop",c:790,s:[3,4,2,1,2,null],note:"The profitable half of the legume pair: fixes nitrogen like clover but sells as pulse protein for the ration."},
+ {id:"potato",n:"Potato",k:"crop",c:790,s:[5,-2,0,-1,2,null],note:"Roughly six months in cold, moist storage — a flagship Root Cellar commodity."},
+ {id:"carrot",n:"Carrot",k:"crop",c:790,s:[4,-1,0,0,2,null],note:"The longest keeper in the roster at around eight months in root-cellar conditions."},
+ {id:"onion",n:"Onion",k:"crop",c:790,s:[4,-1,0,1,1,null],note:"About four months stored. Wants drier air than the roots — the cheap upgrade path for the cellar."},
+ {id:"cabbage",n:"Cabbage",k:"crop",c:790,s:[4,-1,1,-2,2,null],note:"Around five months stored, and a brassica for the rotation — it breaks the cereal–legume cycle."},
+ {id:"lettuce",n:"Leaf lettuce",k:"crop",c:790,s:[3,0,0,0,1,null],note:"About a week of shelf life, so it must never enter the Root Cellar. Short-season leafy greens are the ideal indoor crop and the documented aquaponic staple."},
+ {id:"tomato",n:"Tomato",k:"crop",c:790,s:[4,-1,1,-1,2,null],note:"Grown hydroponically at commercial scale, but a fruiting crop needing far more heat and light and a much longer cycle. The slow, expensive greenhouse tier."},
+ {id:"basil",n:"Basil & culinary herbs",k:"crop",c:790,s:[3,0,2,0,0,null],note:"Year-round indoors, tiny footprint, high value per square metre. The fast partner to lettuce in vertical racks."},
+ {id:"apple",n:"Apple",k:"tree",c:790,s:[5,1,3,0,2,null],note:"Two varieties are needed for successful pollination, with bees and flies moving the pollen. Reaches market, cold storage, cider and bakery — network density, not nostalgia, earned this slot."},
+ {id:"pear",n:"Pear",k:"tree",c:790,s:[4,1,3,0,2,null],note:"Also generally needs two varieties. Shares every piece of orchard infrastructure with apple and adds a second press recipe with no new building."},
+ {id:"blueberry",n:"Blueberry",k:"tree",c:790,s:[4,1,4,0,1,null],note:"Cross-pollination produces larger berries and earlier ripening even in cultivars that do not require it — the cleanest case for pollination as a quality modifier rather than a yes/no gate."},
+ {id:"dairy",n:"Dairy cattle",k:"stock",c:790,s:[5,3,0,0,5,null],note:"Milk, cull meat, manure. Confined milking collects slurry at one point, which is exactly what a digester wants — Biogas 5 is about handling, not animal size."},
+ {id:"pig",n:"Pig",k:"stock",c:790,s:[4,1,0,0,5,null],note:"Swine operations manage manure as liquid or slurry, making them a flagship anaerobic-digestion case alongside dairy."},
+ {id:"chicken",n:"Chicken",k:"stock",c:790,s:[4,1,0,2,3,null],note:"Eggs, meat, and a hatchery loop of its own. Litter is genuine digester feedstock but is handled dry, so it routes through compost."},
+ {id:"sheep",n:"Sheep",k:"stock",c:790,s:[3,3,0,1,1,null],note:"Wool and meat. Manure is dispersed across pasture, which is weak for centralised digestion — so sheep pay into Soil instead of Biogas. That fork is the mechanic."},
+ {id:"salmon",n:"Atlantic salmon",k:"aqua",c:790,s:[5,null,null,null,2,-3],note:"Hatchery → smolt → marine net pen → harvest → processing. The best food value on the coast and the heaviest nutrient load; it needs extractive neighbours to pay its water bill."},
+ {id:"trout",n:"Rainbow trout",k:"aqua",c:790,s:[4,null,null,null,2,-2],note:"Genuinely farmed in aquaponics, though it wants colder water and more oxygen than tilapia. Chosen as the advanced species precisely because it is more demanding."},
+ {id:"oyster",n:"Eastern oyster",k:"aqua",c:790,s:[3,null,null,null,1,5],note:"Requires no feed after the hatchery, filters phytoplankton and removes excess nutrients. The low-input ecological specialist the coast needs."},
+ {id:"mussel",n:"Blue mussel",k:"aqua",c:790,s:[3,null,null,null,1,4],note:"Farmed commercially across New England and the Mid-Atlantic, often sited to absorb nutrients from finfish culture."},
+ {id:"kelp",n:"Sugar kelp",k:"aqua",c:790,s:[2,null,null,null,3,5],note:"Recovers dissolved nutrients outright. The clearest argument that the coast needed its own system rather than a borrowed Soil score."},
+
+ // --- on-farm buildings (col 1160) ---
+ {id:"silos",n:"Grain Silos",k:"bldg",c:1160,s:[3,0,0,0,0,null],note:"Bulk dry buffer between harvest and the mill, the ration or the export terminal."},
+ {id:"packhouse",n:"Vegetable Packhouse",k:"bldg",c:1160,s:[4,0,0,0,2,null],note:"Grading and packing. Culls and trim leave here for compost — a real byproduct stream, not a rounding error."},
+ {id:"rootcellar",n:"Root Cellar",k:"bldg",c:1160,s:[3,0,0,0,0,null],note:"Cold and moist, cheap and low-energy — and inventory-restricted to potato, carrot, onion and cabbage. The restriction is what makes Cold Storage a real upgrade instead of a duplicate."},
+ {id:"dairybarn",n:"Dairy Barn & Milking Parlour",k:"bldg",c:1160,s:[4,0,0,0,5,null],note:"Milk out the front, collected slurry out the back. The single best digester feed point on the farm."},
+ {id:"coop",n:"Chicken Coop & Egg House",k:"bldg",c:1160,s:[4,0,0,0,3,null],note:"Eggs for the bakery and market, fertilised eggs for the hatchery, litter for compost."},
+ {id:"pigbarn",n:"Pig Barn",k:"bldg",c:1160,s:[4,0,0,0,5,null],note:"Slurry handling makes this the second flagship biogas building."},
+ {id:"sheepfold",n:"Sheepfold & Wool Shed",k:"bldg",c:1160,s:[2,2,0,0,1,null],note:"Wool is the non-food output that keeps sheep viable when their biogas contribution is deliberately weak."},
+ {id:"loadyard",n:"Livestock Loading Yard",k:"bldg",c:1160,s:[3,0,0,0,0,null],note:"The junction between every pasture animal and the butchery or an outside buyer."},
+ {id:"apiary",n:"Apiary & Honey House",k:"bldg",c:1160,s:[3,1,5,1,0,null],note:"Honey and wax, plus a pollination bonus — a bonus, not the switch that decides whether pollination happens at all."},
+ {id:"mushhouse",n:"Mushroom Growing House",k:"bldg",c:1160,s:[3,1,0,0,4,null],note:"Turns cereal straw into a second crop on roughly a five-week cycle, then hands spent substrate to compost. The cleanest waste loop in the roster."},
+ {id:"vertfarm",n:"Vertical Farm",k:"bldg",c:1160,s:[3,0,0,0,1,null],note:"Short-season leafy greens only. Fast cycles, small footprint, heavy power draw."},
+ {id:"hydro",n:"Hydroponics Greenhouse",k:"bldg",c:1160,s:[4,0,1,0,2,null],note:"Takes the fruiting crops the vertical racks cannot carry — considerably more heat and light for a much longer cycle."},
+ {id:"aquapon",n:"Aquaponics Greenhouse",k:"bldg",c:1160,s:[4,0,0,0,2,0],note:"Fish excrete ammonia, bacteria convert it to nitrite then nitrate, plants recover it and the water returns cleaner. Amphibious: it scores in both domains and nets to zero on water."},
+ {id:"aquahatch",n:"Aquaculture Hatchery",k:"bldg",c:1160,s:[1,null,null,null,1,1],note:"Eggs and juveniles for salmon and trout, spat and seed for oyster and mussel. Everything on the coast starts here."},
+ {id:"salmonpen",n:"Salmon Pen & Marine Lease",k:"site",c:1160,s:[5,null,null,null,2,-3],note:"PROPOSED. The roster had a hatchery and a processing plant but nothing in between — this is the aquatic equivalent of a field, and the place the net water score is calculated."},
+ {id:"shellease",n:"Shellfish & Kelp Lease",k:"site",c:1160,s:[3,null,null,null,2,5],note:"PROPOSED. Bottom culture, bags, racks, cages, longlines, rafts and suspended lines are all real grow-out methods — enough variety for a whole upgrade track."},
+ {id:"poulthatch",n:"Poultry Hatchery",k:"bldg",c:1160,s:[1,0,0,0,1,null],note:"Closes the flock loop: fertilised eggs in, chicks out, no external stock purchase required."},
+
+ // --- processors (col 1520) ---
+ {id:"flourmill",n:"Flour Mill",k:"bldg",c:1520,s:[5,0,0,0,2,null],note:"Splits wheat into flour and into bran, shorts and middlings — the byproduct that quietly feeds the livestock chain."},
+ {id:"feedmill",n:"Feed Mill & Farm Supply",k:"bldg",c:1520,s:[3,0,0,0,1,null],note:"The clearest chain gap found. A real feed mill mixes, processes and packages custom rations, so the chain is grain plus forage plus protein into formulation — not corn straight into a shop counter. Rename the Feed Store; the building count is unchanged."},
+ {id:"creamery",n:"Creamery & Cheese House",k:"bldg",c:1520,s:[5,0,0,0,2,null],note:"Fluid milk, cheese, butter, yoghurt, whey. Cattle alone justify it — a second dairy animal would be flavour, not necessity."},
+ {id:"bakery",n:"Bakery & Grain Kitchen",k:"bldg",c:1520,s:[5,0,0,0,2,null],note:"The convergence point: flour, eggs, butter and fruit all arrive here, which is what makes wheat and chicken so hard to cut."},
+ {id:"cider",n:"Orchard Press & Cider House",k:"bldg",c:1520,s:[4,0,0,0,3,null],note:"Apple first, pear as the second recipe. Pomace is a genuine digester feedstock."},
+ {id:"butchery",n:"Butchery & Smokehouse",k:"bldg",c:1520,s:[5,0,0,0,3,null],note:"Pig, sheep, poultry and cull cattle. Smoking gives the meat chain a shelf-stable branch that skips cold storage."},
+ {id:"fishpack",n:"Fish Packing House",k:"bldg",c:1520,s:[4,null,null,null,2,0],note:"Cleaned and iced at the water's edge before transport — the first step after harvest, not the last."},
+ {id:"aquaproc",n:"Aquaculture Processing Plant",k:"bldg",c:1520,s:[5,null,null,null,2,0],note:"Portioning, packaging and the export-grade product. Trimmings are strong co-digestion feedstock."},
+ {id:"kelpshell",n:"Kelp & Shellfish Processing",k:"bldg",c:1520,s:[4,null,null,null,2,1],note:"Purging, grading and packing for oyster, mussel and kelp — the whole extractive side of the coast lands here."},
+ {id:"compost",n:"Compost & Fertilizer Facility",k:"bldg",c:1520,s:[1,5,0,1,3,1],note:"Crop residue, dry litter, spent mushroom substrate, packhouse culls and digestate. Amphibious: processing waste from the coast lands here too."},
+ {id:"biogas",n:"Biogas Plant",k:"bldg",c:1520,s:[0,2,0,0,5,1],note:"Technically feasible on cattle, hog and poultry manure, but genuinely well suited to manure collected as liquid or slurry at one central point. Co-digestion with food-processing waste is supported and should be rewarded."},
+ {id:"coldstore",n:"Cold Storage Warehouse",k:"bldg",c:1520,s:[3,0,0,0,1,null],note:"The premium counterpart to the Root Cellar: lettuce, tomato, berries, dairy, meat and fish — everything the cellar must refuse."},
+
+ // --- distribution (col 1870) ---
+ {id:"market",n:"Farm Market Hall",k:"bldg",c:1870,s:[5,0,1,0,1,1],note:"Almost every edible output can terminate here. Amphibious by necessity — the coast sells through the same hall."},
+ {id:"export",n:"Grain Export Terminal",k:"bldg",c:1870,s:[3,0,0,0,0,null],note:"Bulk volume at thin margins — the sink that makes overproducing a grain a viable strategy rather than a mistake."},
+ {id:"lodge",n:"Worker Lodge & Dining Hall",k:"bldg",c:1870,s:[2,0,0,0,3,null],note:"General food demand, which is what turns a market surplus into a labour multiplier. Its scraps are co-digestion feedstock."},
+
+ // --- the sixth system, made visible ---
+ {id:"water",n:"Coastal Waters",k:"system",c:1870,s:[0,null,null,null,0,0],note:"Not a building — the shared water column every lease draws on. Fed species push its nutrient load up; extractive species pull it back down. Net load gates lease expansion, and this is what System 06 measures."}
+];
+
+/* [from, to, item, why, class]  class: mat|agro|poll|aqua|util|pwr */
+const E = [
+ // grain
+ ["wheat","flourmill","Milling wheat","Wheat is the principal U.S. food grain; the mill separates flour from the feed fractions.","mat"],
+ ["wheat","silos","Bulk grain","Dry buffer storage before milling, ration or export.","mat"],
+ ["wheat","mushhouse","Cereal straw","Oyster mycelium grows fast on low-nutrient, high-carbon straw — a documented ~5-week production cycle.","mat"],
+ ["barley","silos","Bulk grain","Second export and feed grain, stored alongside wheat.","mat"],
+ ["barley","feedmill","Feed grain","USDA counts barley among the four major feed grains.","mat"],
+ ["barley","mushhouse","Cereal straw","A second straw source, so the mushroom loop is not hostage to a single crop.","mat"],
+ ["corn","silos","Bulk grain","Held before formulation; corn is the energy backbone of the ration.","mat"],
+ ["corn","feedmill","Energy grain","Corn is over 95% of U.S. feed-grain use and the main energy ingredient in livestock feed.","mat"],
+ ["fieldpea","feedmill","Pulse protein","Legume protein balances the energy grains — this is why the mill exists rather than a feed counter.","mat"],
+ ["fieldpea","silos","Bulk pulse","Stored dry with the grains.","mat"],
+ ["flourmill","bakery","Flour","The core food chain: field to flour to bread.","mat"],
+ ["flourmill","feedmill","Bran, shorts & middlings","Milling byproducts are standard feed ingredients — wheat feeds livestock without planting a second crop.","mat"],
+ ["silos","export","Bulk grain","Volume at thin margins; the sink for surplus production.","mat"],
+ ["silos","feedmill","Stored grain","Buffered supply so the ration does not stall between harvests.","mat"],
+
+ // agronomic (rotation) — crop A modifies crop B
+ ["redclover","corn","Fixed nitrogen","SARE trials found corn following red clover performed comparably to heavily N-fertilised corn. Roughly 70–150 lb N/acre.","agro"],
+ ["redclover","wheat","Fixed nitrogen","The nitrogen lands on the following crop, not on the farm as a whole — this is why the bonus is an edge, not a stat.","agro"],
+ ["fieldpea","wheat","Fixed nitrogen","Legumes commonly fix ~50–150 lb N/acre, but the real figure swings with species, biomass and termination timing. Model it as a modifier with variance, never a constant.","agro"],
+ ["cerealrye","potato","Weed suppression","Rye suppresses weeds both competitively and through allelopathic compounds, and holds the soil over winter.","agro"],
+ ["cerealrye","corn","Retained nitrogen","Rye scavenges excess nitrogen left in the profile and returns it to the next crop instead of losing it.","agro"],
+ ["radish","carrot","Loosened profile","Fast rooting and biomass ahead of a root crop; strongest as part of a mix rather than alone.","agro"],
+ ["mustard","potato","Biofumigant residue","Incorporated brassica residue suppresses weeds and soilborne pests ahead of a root crop. Design addition — biofumigation is real agronomy but sits outside the sourced research set.","agro"],
+ ["mustard","onion","Biofumigant residue","A third crop family in the rotation, which is worth as much as the residue effect itself.","agro"],
+ ["mustard","apiary","Nectar flow","Brassica bloom extends the forage window either side of the orchard set.","poll"],
+ ["hayseed","mustard","Cover-crop seed","Seed stock gates how much cover you can actually establish.","util"],
+ ["radish","potato","Weed-suppressing biomass","Fast autumn growth smothers weeds and the taproot opens the profile before a root crop.","agro"],
+ ["buckwheat","potato","Weed suppression","Buckwheat covers ground fast enough to shade weeds out — the other half of its job alongside the blossom.","agro"],
+ ["radish","cerealrye","Mixture partner","Legume-plus-rye or radish mixes combine nitrogen supply with nitrogen retention better than either monoculture — the evidence behind rewarding diversity.","agro"],
+ ["buckwheat","apple","Pollinator support","Abundant, fast-arriving blossom pulls pollinators toward the orchard during set.","poll"],
+ ["buckwheat","blueberry","Pollinator support","More visits mean larger berries and earlier ripening, not merely more fruit.","poll"],
+ ["buckwheat","cabbage","Beneficial insects","Buckwheat attracts beneficials as well as pollinators, which is what separates it from a pure fertility crop.","poll"],
+ ["alfalfa","dairy","Baled forage","Perennial legume forage — the roughage half of the ration the mill cannot supply.","mat"],
+ ["alfalfa","hayseed","Hay","Baled and stored for winter feeding.","mat"],
+ ["redclover","hayseed","Seed & forage","Kept as seed for the next rotation, which makes cover-crop planning a stocked resource.","mat"],
+ ["hayseed","cerealrye","Cover-crop seed","Seed stock gates how much cover you can actually establish.","util"],
+ ["hayseed","buckwheat","Cover-crop seed","Same gate — cover crops should cost planning, not just a click.","util"],
+ ["hayseed","dairy","Winter forage","Stored hay carries the herd through the off-season.","mat"],
+ ["hayseed","sheep","Winter forage","Pasture animals still need stored feed out of season.","mat"],
+
+ // vegetables & storage
+ ["potato","rootcellar","Storage potatoes","About six months in cold, moist storage.","mat"],
+ ["carrot","rootcellar","Storage carrots","Roughly eight months — the longest keeper in the roster.","mat"],
+ ["onion","rootcellar","Cured onions","About four months; wants drier air than the roots, which is a natural cellar upgrade.","mat"],
+ ["cabbage","rootcellar","Stored cabbage","Around five months in cellar conditions.","mat"],
+ ["potato","packhouse","Fresh grade","The fresh-market branch that skips storage entirely for a better price.","mat"],
+ ["carrot","packhouse","Fresh grade","Graded, washed and packed for immediate sale.","mat"],
+ ["cabbage","packhouse","Fresh grade","Brassicas sell fresh at a premium over stored.","mat"],
+ ["onion","packhouse","Fresh grade","Packed for the market hall.","mat"],
+ ["lettuce","packhouse","Salad greens","Around a week of shelf life — it must never enter the Root Cellar.","mat"],
+ ["tomato","packhouse","Fresh tomatoes","Poor candidate for long cold, moist storage; different conditions entirely.","mat"],
+ ["packhouse","coldstore","Perishable produce","Lettuce, tomato and berries need the premium warehouse, not the cellar.","mat"],
+ ["packhouse","market","Packed produce","The main fresh-vegetable route to the counter.","mat"],
+ ["packhouse","compost","Culls & trim","Grading waste is a real organic-waste stream and a good digester or compost input.","mat"],
+ ["rootcellar","market","Stored roots","Cheap, low-energy storage lets you sell into winter prices.","mat"],
+ ["rootcellar","lodge","Provisions","Staple calories for the workforce.","mat"],
+
+ // controlled environment
+ ["vertfarm","lettuce","Leaf lettuce","Short-season leafy greens are especially suited to indoor production — fast cycles, small footprint.","mat"],
+ ["vertfarm","basil","Culinary herbs","Herbs grow well year-round indoors and carry the highest value per square metre.","mat"],
+ ["hydro","tomato","Greenhouse tomatoes","Commonly grown hydroponically, but fruiting crops need considerably more heat and light and a much longer cycle.","mat"],
+ ["hydro","lettuce","Leaf lettuce","Lettuce also runs well here; the greenhouse trades speed for crop range.","mat"],
+ ["hydro","basil","Culinary herbs","Herbs share the nutrient regime with greens rather than with fruiting crops.","mat"],
+ ["aquapon","lettuce","Leaf lettuce","Leaf lettuce is the documented crop in aquaponic systems.","mat"],
+ ["aquapon","basil","Culinary herbs","Herbs suit the same low-nutrient-demand bed as the greens.","mat"],
+ ["aquapon","trout","Table trout","Trout prefers colder water and needs more oxygen than the usual species — the reason it is the advanced tier.","mat"],
+ ["trout","aquapon","Ammonia","Fish excrete ammonia; bacteria convert it to nitrite then nitrate. That nitrate is the crop's entire fertiliser supply.","aqua"],
+ ["aquapon","water","Zero net discharge","Plants recover the dissolved nutrients and the water returns to the fish cleaner — the loop nets to zero on System 06.","aqua"],
+ ["nursery","tomato","Transplants","Long-season fruiting crops start under glass.","util"],
+ ["nursery","lettuce","Seedlings","Transplanting beats direct seeding for the fast greens.","util"],
+ ["nursery","apple","Grafted saplings","Orchards take years to establish — the nursery is the only entry point.","util"],
+ ["nursery","pear","Grafted saplings","Pear shares the orchard establishment path with apple.","util"],
+ ["nursery","blueberry","Rooted stock","Berry plantings also start in the nursery.","util"],
+
+ // orchard & pollination
+ ["bee","apple","Pollination","Two varieties are required for successful pollination, with insects — bees and flies — carrying pollen between the trees.","poll"],
+ ["bee","pear","Pollination","Pears generally need two varieties too, though a few can set an adequate crop alone.","poll"],
+ ["bee","blueberry","Cross-pollination","Bees pollinate blueberries; even cultivars that do not require another variety produce larger berries and earlier ripening with cross-pollination.","poll"],
+ ["apiary","bee","Managed colonies","Commercial growers deliberately bring hives to the crop — the apiary is a bonus on top of the wild baseline, not the switch that enables fruit.","poll"],
+ ["bee","apiary","Honey & wax","The colony's own saleable output, which keeps the apiary viable when pollination is only a modifier.","mat"],
+ ["buckwheat","apiary","Nectar flow","Abundant blossom is what lets a colony build stores; flowering crops and the apiary reinforce each other.","poll"],
+ ["apple","cider","Pressing apples","Specific varieties are documented as cider-suited — a real reason to grow more than one.","mat"],
+ ["pear","cider","Pressing pears","A second press recipe using the same building and the same orchard.","mat"],
+ ["apple","coldstore","Storage apples","Varieties differ in storage length, so cold storage extends the selling window.","mat"],
+ ["pear","coldstore","Storage pears","Shares orchard infrastructure end to end with apple.","mat"],
+ ["blueberry","coldstore","Fresh berries","Premium perishable — cold storage, never the cellar.","mat"],
+ ["blueberry","bakery","Baking fruit","Fruit is the third leg of the bakery alongside flour and eggs.","mat"],
+ ["apple","bakery","Baking fruit","Orchard output feeding the grain kitchen is what makes apple a network node rather than a snack.","mat"],
+ ["cider","market","Cider & juice","A value-added product that outsells raw fruit per unit.","mat"],
+ ["cider","biogas","Pomace","Press residue is a genuine co-digestion feedstock.","mat"],
+
+ // livestock
+ ["feedmill","dairy","Formulated ration","A real feed mill mixes, processes and packages custom rations — the chain is ingredients into formulation, not corn into a counter.","mat"],
+ ["feedmill","pig","Formulated ration","Energy grain plus pulse protein, balanced per species.","mat"],
+ ["feedmill","chicken","Formulated ration","Poultry rations are the mill's highest-specification product.","mat"],
+ ["feedmill","trout","Aquafeed","Fed aquaculture is exactly why salmon and trout carry a negative water score — the feed comes from the land.","mat"],
+ ["feedmill","salmon","Aquafeed","The land chain subsidising the marine one; it should be visible and costly.","mat"],
+ ["dairy","dairybarn","Raw milk","Twice-daily milking is what makes the herd a continuous rather than seasonal income.","mat"],
+ ["dairybarn","creamery","Bulk milk","Fluid milk, cheese, butter, ice cream, yoghurt, dry milk, condensed milk and whey all descend from this one input.","mat"],
+ ["dairybarn","biogas","Collected slurry","Biogas is particularly well suited to manure collected as liquid or slurry at a central location — dairy is the flagship case.","mat"],
+ ["creamery","market","Cheese & butter","The highest-margin land product in the roster.","mat"],
+ ["creamery","bakery","Butter & milk","Dairy feeds the bakery, which is why the two should sit close on the build order.","mat"],
+ ["creamery","coldstore","Fresh dairy","Dairy belongs in the premium warehouse, not the cellar.","mat"],
+ ["pig","pigbarn","Grow-out","Confined handling is the whole point: it is what makes the manure collectable.","mat"],
+ ["pigbarn","biogas","Collected slurry","Swine operations manage manure as liquid or slurry, making them a best-use anaerobic-digestion case.","mat"],
+ ["pigbarn","loadyard","Finished pigs","The junction to butchery or an outside buyer.","mat"],
+ ["chicken","coop","Eggs","Daily output with no slaughter — the steadiest early-game income.","mat"],
+ ["coop","bakery","Eggs","Eggs plus flour plus butter is the bakery's real recipe.","mat"],
+ ["coop","market","Table eggs","Direct sale for the flock's routine surplus.","mat"],
+ ["coop","poulthatch","Fertilised eggs","Closes the flock loop so you never buy in stock.","mat"],
+ ["poulthatch","chicken","Chicks","Replacement birds; flock growth becomes a planning decision.","mat"],
+ ["coop","compost","Dry litter","Poultry manure is real digester feedstock, but it is handled dry rather than as slurry — so it composts instead.","mat"],
+ ["sheep","sheepfold","Fleece","Wool is the non-food output that keeps sheep worth keeping.","mat"],
+ ["sheepfold","market","Wool & yarn","A textile branch entirely outside the food economy.","mat"],
+ ["sheep","loadyard","Finished lambs","Meat route, shared with the other pasture animals.","mat"],
+ ["sheep","compost","Pasture manure","Dispersed across the field rather than collected, so it pays into soil and compost, not the digester.","agro"],
+ ["sheep","alfalfa","Managed grazing","Properly managed grazing improves soil cover, structure and organic matter, and spreads manure evenly — but overstocking compacts and degrades. The bonus must be conditional.","agro"],
+ ["dairy","loadyard","Cull cattle","End-of-life animals still carry meat value.","mat"],
+ ["loadyard","butchery","Live animals","Pig, sheep, poultry and cull cattle all converge here.","mat"],
+ ["butchery","market","Cuts & smoked meat","Smoking gives the meat chain a shelf-stable branch that bypasses cold storage entirely.","mat"],
+ ["butchery","coldstore","Fresh carcass","Everything not smoked needs the premium warehouse.","mat"],
+ ["butchery","biogas","Processing waste","Food-processing waste is a supported co-digestion feedstock.","mat"],
+ ["vet","dairy","Herd health","Multiplies output rather than consuming a commodity — how a service building should work.","util"],
+ ["vet","pig","Herd health","Confined housing raises the value of veterinary cover.","util"],
+ ["vet","chicken","Flock health","Density makes poultry the most vet-sensitive stock.","util"],
+ ["vet","sheep","Flock health","Pasture animals need different cover from confined ones.","util"],
+
+ // mushrooms & residues
+ ["mushhouse","compost","Spent substrate","Used blocks still hold organic matter — a game abstraction of the residue chain, but a defensible one.","mat"],
+ ["mushhouse","market","Oyster mushrooms","A second crop out of a byproduct, which is what makes the loop worth building.","mat"],
+ ["compost","potato","Finished compost","Organic matter returned to the field — the loop closing where the player can see it.","agro"],
+ ["compost","wheat","Finished compost","Residue and manure become next season's fertility.","agro"],
+ ["biogas","compost","Digestate","What remains after digestion is still a fertiliser input, not waste.","mat"],
+ ["biogas","dairybarn","Heat & power","On-site energy from on-site manure — the reason the digester sits beside the barn.","pwr"],
+ ["biogas","hydro","Heat & power","Greenhouse heat is the highest-value use of digester output.","pwr"],
+ ["lodge","biogas","Kitchen waste","Co-digestion with other organic wastes is supported and should be rewarded.","mat"],
+
+ // coast
+ ["aquahatch","salmonpen","Smolts","Salmon are raised from eggs in land-based hatcheries and moved to coastal net pens at the smolt stage.","mat"],
+ ["aquahatch","trout","Fingerlings","The same hatchery supplies the aquaponics greenhouse.","mat"],
+ ["aquahatch","shellease","Spat & seed","Oyster spat and mussel seed are hatchery products; after that the animals need no feed at all.","mat"],
+ ["salmonpen","salmon","Harvest","Grown out in marine net pens, then harvested — the middle asset the building list was missing.","mat"],
+ ["shellease","oyster","Harvest","Bottom culture, bags, racks, cages, longlines, rafts and suspended lines are all documented grow-out methods.","mat"],
+ ["shellease","mussel","Harvest","Mussels share the lease and the gear with oysters.","mat"],
+ ["shellease","kelp","Harvest","Sugar kelp grows on the same lines with no feed and no seed stock after outplanting.","mat"],
+ ["salmon","fishpack","Iced whole fish","Cleaned and iced at the water's edge, then transported for processing and packaging.","mat"],
+ ["trout","fishpack","Iced whole fish","Trout follows the same handling path as salmon.","mat"],
+ ["fishpack","aquaproc","Dressed fish","Packing is the first step after harvest; processing is where the export-grade product is made.","mat"],
+ ["aquaproc","market","Portioned fish","The premium counter product.","mat"],
+ ["aquaproc","export","Export cartons","Volume that leaves the region entirely.","mat"],
+ ["aquaproc","biogas","Trimmings","Processing waste is strong co-digestion feedstock and closes the coast into the land loop.","mat"],
+ ["oyster","kelpshell","Live oysters","Purged, graded and packed — the extractive side of the coast lands here.","mat"],
+ ["mussel","kelpshell","Live mussels","Shares the plant and the handling line with oysters.","mat"],
+ ["kelp","kelpshell","Wet kelp","Processed for food and for the fertiliser branch.","mat"],
+ ["kelpshell","market","Shellfish & kelp","Three products, one building — the coast does not need three processors.","mat"],
+ ["kelpshell","compost","Shell & kelp waste","Coastal residue entering the land compost stream; this is what makes the compost facility amphibious.","mat"],
+ ["salmonpen","water","Nutrient load","Fed net-pen culture adds dissolved and particulate nutrients. On System 06 this is a negative, and it should be visible.","aqua"],
+ ["oyster","water","Nutrient removal","Oysters feed by filtering phytoplankton, removing algae, organic matter and excess nutrients, and can improve water quality.","aqua"],
+ ["mussel","water","Nutrient removal","Mussels are commonly farmed beside finfish precisely to absorb culture nutrients.","aqua"],
+ ["kelp","water","Nutrient recovery","Kelp recovers dissolved nutrients outright — the clearest case that the coast needed its own system.","aqua"],
+ ["water","shellease","Filtered water column","A clean lease grows better shellfish. Net load should gate expansion, which turns System 06 into a real constraint.","aqua"],
+ ["coastres","water","Monitoring","Reads the lease's net nutrient balance and unlocks the extractive species — the coastal answer to the field laboratory.","util"],
+ ["boathouse","salmonpen","Nets & pens","Gear rather than biology; the lease cannot operate without it.","util"],
+ ["boathouse","shellease","Cages & longlines","Each grow-out method is a different gear investment.","util"],
+ ["lighthouse","boathouse","Safe passage","A pure service asset — one of the buildings that needs a non-agricultural mechanic.","util"],
+ ["keeper","lighthouse","Keeper","Staffing, not commodities. The clearest case for a service economy in the roster.","util"],
+
+ // distribution & services
+ ["market","lodge","Provisions","Surplus becomes labour capacity, which is how food demand stops being a dead end.","mat"],
+ ["housing","lodge","Workforce","Labour supply meeting the food that sustains it.","util"],
+ ["estate","kiosk","Land claims","Administration driving expansion — no biological input, and none needed.","util"],
+ ["fieldlab","wheat","Soil & tissue tests","Samples, not commodities. This should reveal the hidden Soil state a rotation has built up.","util"],
+ ["fieldlab","redclover","Nitrogen assay","Legume contribution varies enormously with species, biomass and termination timing — the lab is how the player sees the actual number.","util"],
+ ["drone","fieldlab","Survey data","Scouting pairs naturally with the hidden soil state.","util"],
+ ["robotics","potato","Field automation","Reduces labour per hectare on the highest-handling crops.","util"],
+ ["workshop","robotics","Service & parts","Machinery uptime as an ongoing cost.","util"],
+ ["irrig","potato","Irrigation water","Water is a per-field input with no biological output of its own.","util"],
+ ["irrig","lettuce","Irrigation water","Short-season greens are the least drought-tolerant crop on the roster.","util"],
+ ["tower","irrig","Pressurised water","Buffer between source and use.","util"],
+ ["well","tower","Groundwater","The inland source.","util"],
+ ["desal","tower","Fresh water","The coastal source — expensive, power-hungry, and the reason the microgrid matters.","util"],
+ ["solar","coldstore","Electricity","Cold storage is the heaviest continuous draw on the farm.","pwr"],
+ ["solar","vertfarm","Electricity","Vertical racks are lit around the clock.","pwr"],
+ ["solar","desal","Electricity","Desalination only pencils out with cheap power.","pwr"],
+ ["wind","hydro","Electricity","Greenhouse lighting and heating on a different daily curve from solar.","pwr"],
+ ["wind","aquapon","Electricity","Recirculating systems must never lose their pumps.","pwr"],
+ ["nursery","permitfield","Proof of working","Field Deed is issued once the farm is visibly running a greenhouse nursery — the permit is earned by what you already operate, never bought out of savings.","util"],
+ ["tower","permitfield","Proof of working","Field Deed is issued once the farm is visibly running a water tower — the permit is earned by what you already operate, never bought out of savings.","util"],
+ ["permitfield","wheat","Rights granted","Nothing in the chains opens wheat, so without this permit its only gate is money — and on a per-tier curve that is no gate at all.","util"],
+ ["permitfield","barley","Rights granted","Nothing in the chains opens barley, so without this permit its only gate is money — and on a per-tier curve that is no gate at all.","util"],
+ ["permitfield","cabbage","Rights granted","Nothing in the chains opens cabbage, so without this permit its only gate is money — and on a per-tier curve that is no gate at all.","util"],
+ ["permitfield","corn","Rights granted","Nothing in the chains opens corn, so without this permit its only gate is money — and on a per-tier curve that is no gate at all.","util"],
+ ["permitfield","fieldpea","Rights granted","Nothing in the chains opens field pea, so without this permit its only gate is money — and on a per-tier curve that is no gate at all.","util"],
+ ["permitfield","radish","Rights granted","Nothing in the chains opens forage radish, so without this permit its only gate is money — and on a per-tier curve that is no gate at all.","util"],
+ ["permitfield","onion","Rights granted","Nothing in the chains opens onion, so without this permit its only gate is money — and on a per-tier curve that is no gate at all.","util"],
+ ["permitfield","alfalfa","Rights granted","Nothing in the chains opens alfalfa, so without this permit its only gate is money — and on a per-tier curve that is no gate at all.","util"],
+ ["permitfield","redclover","Rights granted","Nothing in the chains opens red clover, so without this permit its only gate is money — and on a per-tier curve that is no gate at all.","util"],
+ ["market","permitstock","Proof of working","Livestock Licence is issued once the farm is visibly running a farm market hall — the permit is earned by what you already operate, never bought out of savings.","util"],
+ ["packhouse","permitstock","Proof of working","Livestock Licence is issued once the farm is visibly running a vegetable packhouse — the permit is earned by what you already operate, never bought out of savings.","util"],
+ ["permitstock","dairy","Rights granted","Nothing in the chains opens dairy cattle, so without this permit its only gate is money — and on a per-tier curve that is no gate at all.","util"],
+ ["permitstock","pig","Rights granted","Nothing in the chains opens pig, so without this permit its only gate is money — and on a per-tier curve that is no gate at all.","util"],
+ ["permitstock","sheep","Rights granted","Nothing in the chains opens sheep, so without this permit its only gate is money — and on a per-tier curve that is no gate at all.","util"],
+ ["feedmill","permitgrove","Proof of working","Orchard Deed is issued once the farm is visibly running a feed mill & farm supply — the permit is earned by what you already operate, never bought out of savings.","util"],
+ ["hayseed","permitgrove","Proof of working","Orchard Deed is issued once the farm is visibly running a hay & seed storage barn — the permit is earned by what you already operate, never bought out of savings.","util"],
+ ["permitgrove","bee","Rights granted","Nothing in the chains opens european honey bee, so without this permit its only gate is money — and on a per-tier curve that is no gate at all.","util"],
+ ["permitgrove","apple","Rights granted","Nothing in the chains opens apple, so without this permit its only gate is money — and on a per-tier curve that is no gate at all.","util"],
+ ["permitgrove","pear","Rights granted","Nothing in the chains opens pear, so without this permit its only gate is money — and on a per-tier curve that is no gate at all.","util"],
+ ["permitgrove","blueberry","Rights granted","Nothing in the chains opens blueberry, so without this permit its only gate is money — and on a per-tier curve that is no gate at all.","util"],
+ ["bakery","permitgrid","Proof of working","Utility Permit is issued once the farm is visibly running a bakery & grain kitchen — the permit is earned by what you already operate, never bought out of savings.","util"],
+ ["export","permitgrid","Proof of working","Utility Permit is issued once the farm is visibly running a grain export terminal — the permit is earned by what you already operate, never bought out of savings.","util"],
+ ["permitgrid","drone","Rights granted","Nothing in the chains opens drone dock, so without this permit its only gate is money — and on a per-tier curve that is no gate at all.","util"],
+ ["permitgrid","solar","Rights granted","Nothing in the chains opens solar microgrid, so without this permit its only gate is money — and on a per-tier curve that is no gate at all.","util"],
+ ["permitgrid","wind","Rights granted","Nothing in the chains opens wind turbine, so without this permit its only gate is money — and on a per-tier curve that is no gate at all.","util"],
+ ["permitgrid","aquapon","Rights granted","Nothing in the chains opens aquaponics greenhouse, so without this permit its only gate is money — and on a per-tier curve that is no gate at all.","util"],
+ ["permitgrid","hydro","Rights granted","Nothing in the chains opens hydroponics greenhouse, so without this permit its only gate is money — and on a per-tier curve that is no gate at all.","util"],
+ ["permitgrid","vertfarm","Rights granted","Nothing in the chains opens vertical farm, so without this permit its only gate is money — and on a per-tier curve that is no gate at all.","util"],
+ ["permitgrid","robotics","Rights granted","Nothing in the chains opens agricultural robotics depot, so without this permit its only gate is money — and on a per-tier curve that is no gate at all.","util"],
+ ["biogas","permitcoast","Proof of working","Coastal Lease Permit is issued once the farm is visibly running a biogas plant — the permit is earned by what you already operate, never bought out of savings.","util"],
+ ["coop","permitcoast","Proof of working","Coastal Lease Permit is issued once the farm is visibly running a chicken coop & egg house — the permit is earned by what you already operate, never bought out of savings.","util"],
+ ["permitcoast","aquahatch","Rights granted","Nothing in the chains opens aquaculture hatchery, so without this permit its only gate is money — and on a per-tier curve that is no gate at all.","util"],
+ ["permitcoast","coastres","Rights granted","Nothing in the chains opens coastal research station, so without this permit its only gate is money — and on a per-tier curve that is no gate at all.","util"],
+ ["permitcoast","desal","Rights granted","Nothing in the chains opens desalination plant, so without this permit its only gate is money — and on a per-tier curve that is no gate at all.","util"],
+ ["permitcoast","keeper","Rights granted","Nothing in the chains opens lighthouse keeper's cottage, so without this permit its only gate is money — and on a per-tier curve that is no gate at all.","util"],
+ ["permitcoast","boathouse","Rights granted","Nothing in the chains opens boathouse & net loft, so without this permit its only gate is money — and on a per-tier curve that is no gate at all.","util"],
+ ["permitcoast","lighthouse","Rights granted","Nothing in the chains opens lighthouse, so without this permit its only gate is money — and on a per-tier curve that is no gate at all.","util"],
+ ["bakery","market","Bread & pastry","The bakery had no route to a counter at all — it earned money the network could not deliver.","mat"],
+ ["bakery","lodge","Daily bread","Staple provisioning for the workforce, and the bakery's steady baseline demand.","mat"],
+ ["apiary","market","Honey & wax","Honey is the apiary's own saleable output; without this edge its pollination bonus was its only reason to exist.","mat"],
+ ["basil","packhouse","Fresh herbs","Cut herbs grade and pack with the salad crops.","mat"],
+ ["basil","market","Potted herbs","The highest value per square metre in the roster, sold live rather than cut.","mat"],
+ ["compost","market","Bagged fertiliser","Surplus compost sells as a product rather than only returning to the fields.","mat"],
+ ["nursery","market","Nursery stock","Seedlings and saplings sold on, which is how a nursery pays for itself between plantings.","mat"],
+ ["cerealrye","mushhouse","Cereal straw","Rye straw substitutes for wheat straw in the mushroom house — a second use for the weed-suppression crop.","mat"],
+ ["cerealrye","hayseed","Cover-crop seed","Rye seed saved for the next rotation.","mat"],
+ ["buckwheat","market","Buckwheat groats","Buckwheat is a food grain in its own right, not only a cover crop.","mat"],
+ ["buckwheat","hayseed","Cover-crop seed","Seed held back so the pollinator crop can be sown again.","mat"],
+ ["mustard","market","Mustard seed","The condiment crop — the biofumigant is the second job, not the only one.","mat"],
+ ["mustard","hayseed","Cover-crop seed","Brassica seed for the rotation.","mat"],
+ ["radish","feedmill","Fodder radish","Forage radish is livestock fodder as well as a soil crop — that is what forage means.","mat"],
+];
+
+/* ============================ LAYOUT ============================ */
+const byId = Object.fromEntries(N.map(n => [n.id, n]));
+E.forEach(e => { e[5] = byId[e[0]]; e[6] = byId[e[1]]; });
+const cols = [...new Set(N.map(n => n.c))].sort((a,b) => a-b);
+const colNodes = cols.map(c => N.filter(n => n.c === c));
+N.forEach(n => { n.in = E.filter(e => e[1] === n.id); n.out = E.filter(e => e[0] === n.id); });
+
+const GAP = 44;
+colNodes.forEach(g => g.forEach((n,i) => n.y = i * GAP));
+function bary(dir){
+  const order = dir > 0 ? cols.map((_,i)=>i) : cols.map((_,i)=>cols.length-1-i);
+  for (const ci of order){
+    const g = colNodes[ci];
+    g.forEach(n => {
+      const nb = (dir>0 ? n.in.map(e=>e[5]) : n.out.map(e=>e[6])).filter(m => m && m.c !== n.c);
+      n.bx = nb.length ? nb.reduce((s,m)=>s+m.y,0)/nb.length : n.y;
+    });
+    g.sort((a,b) => a.bx - b.bx);
+    g.forEach((n,i) => n.y = i * GAP);
+  }
+}
+for (let p = 0; p < 6; p++){ bary(1); bary(-1); }
+const H = Math.max(...colNodes.map(g => g.length)) * GAP;
+colNodes.forEach(g => { const off = (H - (g.length-1)*GAP)/2; g.forEach((n,i) => n.y = off + i*GAP); });
+const W = cols[cols.length-1] + 210;
+N.forEach(n => n.x = n.c);
+
+/* ============================ GLYPHS ============================ */
+/* One distinct emoji per entity — an identifier at a glance, so the shape can stay
+   dedicated to category and the colour to domain. */
+const EMO = {
+  well:"🪣", desal:"🧂", solar:"☀️", wind:"💨", workshop:"🔧", fieldlab:"🔬", vet:"🩺",
+  nursery:"🪴", hayseed:"🧺", estate:"🏛️", kiosk:"📋", housing:"🏠", robotics:"🤖",
+  drone:"🛸", boathouse:"⛵", keeper:"🏡", lighthouse:"🗼", coastres:"🔭", irrig:"💦", tower:"🚰",
+  redclover:"🍀", alfalfa:"🍃", buckwheat:"🌼", cerealrye:"🌾", radish:"🌱", mustard:"🌻", bee:"🐝",
+  wheat:"🥖", barley:"🍺", corn:"🌽", fieldpea:"🫛", potato:"🥔", carrot:"🥕", onion:"🧅",
+  cabbage:"🥬", lettuce:"🥗", tomato:"🍅", basil:"🌿", apple:"🍎", pear:"🍐", blueberry:"🫐",
+  dairy:"🐄", pig:"🐖", chicken:"🐔", sheep:"🐑", salmon:"🐟", trout:"🐠", oyster:"🦪",
+  mussel:"🐚", kelp:"🎋",
+  silos:"🛢️", packhouse:"📦", rootcellar:"🕳️", dairybarn:"🥛", coop:"🥚", pigbarn:"🐽",
+  sheepfold:"🧶", loadyard:"🚛", apiary:"🍯", mushhouse:"🍄", vertfarm:"🏢", hydro:"💧",
+  aquapon:"🔁", aquahatch:"🫧", salmonpen:"🕸️", shellease:"🪢", poulthatch:"🐣",
+  flourmill:"🌀", feedmill:"🥣", creamery:"🧀", bakery:"🍞", cider:"🥤", butchery:"🥓",
+  fishpack:"🧊", aquaproc:"🍣", kelpshell:"🏭", compost:"♻️", biogas:"🔥", coldstore:"❄️",
+  market:"🏪", export:"🚢", lodge:"🍽️", water:"🌊",
+  permitfield:"📜", permitstock:"🧾", permitgrove:"📃", permitgrid:"📑", permitcoast:"🗝"
+};
+const EMOFONT = '"Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif';
+N.forEach(n => { n.g = EMO[n.id] || "•"; });
+
+/* ============================ KNOWLEDGE TIERS ============================ */
+/* 2 = studied, 1 = observed (planted, outcome seen), 0 = unknown.
+   The demo state is a plausible early save: a grain-and-roots farm with a herd,
+   which has never touched the coast. */
+const STUDIED = new Set(["wheat","potato","redclover","chicken","dairy","carrot","onion",
+  "flourmill","bakery","silos","rootcellar","packhouse","coop","dairybarn","creamery",
+  "compost","market","hayseed","nursery","fieldlab","well","tower","irrig","solar"]);
+N.forEach(n => n.tier = STUDIED.has(n.id) ? 2 : 0);
+N.forEach(n => {
+  if (n.tier === 2) return;
+  const touches = [...n.in, ...n.out].some(e => STUDIED.has(e[0]) || STUDIED.has(e[1]));
+  if (touches) n.tier = 1;
+});
+
+/* ============================ UNLOCK TREE ============================ */
+/* Steps are DERIVED from the graph, not authored: a building opens one step after the
+   earliest thing that can feed it. Sources (utilities, nurseries, leases) have nothing
+   upstream, so they are gated by chapter and cost instead. */
+const STEP = {"potato":0,"rootcellar":1,"lettuce":1,"carrot":0,"coop":5,"nursery":0,"well":0,"tower":0,"chicken":4,"flourmill":3,"housing":1,"fieldlab":1,"packhouse":1,"irrig":1,"workshop":1,"market":1,"silos":3,"compost":2,"kiosk":1,"cabbage":2,"onion":2,"hayseed":3,"fieldpea":2,"corn":2,"wheat":2,"barley":2,"cerealrye":4,"permitfield":1,"radish":2,"redclover":2,"creamery":5,"bakery":4,"dairybarn":4,"feedmill":3,"dairy":3,"mushhouse":3,"lodge":2,"estate":2,"vet":2,"pigbarn":4,"loadyard":4,"pig":3,"sheepfold":4,"alfalfa":2,"sheep":3,"permitstock":2,"poulthatch":6,"mustard":4,"butchery":5,"cider":4,"export":4,"coldstore":6,"apiary":6,"blueberry":3,"apple":3,"pear":3,"bee":5,"permitgrove":4,"buckwheat":4,"biogas":4,"aquapon":6,"hydro":6,"vertfarm":6,"solar":6,"robotics":7,"wind":6,"drone":6,"basil":7,"tomato":4,"permitgrid":5,"salmon":5,"aquahatch":6,"salmonpen":7,"shellease":7,"desal":6,"aquaproc":9,"kelpshell":9,"trout":5,"boathouse":6,"oyster":8,"kelp":8,"keeper":6,"lighthouse":6,"mussel":8,"coastres":8,"permitcoast":5,"fishpack":8};
+N.forEach(n => n.step = (STEP[n.id] === undefined ? 0 : STEP[n.id]));
+const MAXSTEP = Math.max(...N.map(n => n.step));
+/* The prerequisite DAG: 65 of the 170 flows, being only the earliest suppliers — the
+   ones that actually cause a thing to open. Verified acyclic. */
+const DAGFWD_RAW = {}, DAGBACK_RAW = {};
+const DAGSET = new Set(["wheat>flourmill","barley>silos","corn>silos","fieldpea>silos","wheat>silos","barley>mushhouse","wheat>mushhouse","barley>feedmill","corn>feedmill","fieldpea>feedmill","radish>feedmill","apple>bakery","blueberry>bakery","flourmill>bakery","silos>export","hayseed>mustard","alfalfa>dairy","permitstock>dairy","alfalfa>hayseed","redclover>hayseed","hayseed>cerealrye","hayseed>buckwheat","carrot>rootcellar","potato>rootcellar","carrot>packhouse","potato>packhouse","packhouse>coldstore","apple>coldstore","blueberry>coldstore","pear>coldstore","butchery>coldstore","creamery>coldstore","packhouse>compost","market>lodge","rootcellar>lodge","aquapon>basil","hydro>basil","vertfarm>basil","nursery>tomato","nursery>lettuce","nursery>apple","nursery>pear","nursery>blueberry","bee>apiary","apple>cider","pear>cider","feedmill>chicken","feedmill>trout","feedmill>salmon","dairy>dairybarn","dairybarn>creamery","pig>pigbarn","chicken>coop","coop>poulthatch","sheep>sheepfold","dairy>loadyard","sheep>loadyard","loadyard>butchery","lodge>biogas","aquahatch>salmonpen","boathouse>salmonpen","aquahatch>shellease","boathouse>shellease","shellease>oyster","shellease>mussel","shellease>kelp","salmon>fishpack","trout>fishpack","fishpack>aquaproc","kelp>kelpshell","mussel>kelpshell","oyster>kelpshell","nursery>permitfield","tower>permitfield","permitfield>wheat","permitfield>barley","permitfield>cabbage","permitfield>corn","permitfield>fieldpea","permitfield>radish","permitfield>onion","permitfield>alfalfa","permitfield>redclover","market>permitstock","packhouse>permitstock","permitstock>pig","permitstock>sheep","feedmill>permitgrove","hayseed>permitgrove","permitgrove>bee","bakery>permitgrid","export>permitgrid","permitgrid>drone","permitgrid>solar","permitgrid>wind","permitgrid>aquapon","permitgrid>hydro","permitgrid>vertfarm","permitgrid>robotics","biogas>permitcoast","permitcoast>aquahatch","permitcoast>coastres","permitcoast>desal","permitcoast>keeper","permitcoast>boathouse","permitcoast>lighthouse","nursery>market"]);
+
+DAGSET.forEach(k => { const [a, b] = k.split(">");
+  (DAGFWD_RAW[a] = DAGFWD_RAW[a] || []).push(b);
+  (DAGBACK_RAW[b] = DAGBACK_RAW[b] || []).push(a); });
+
+/* ============================ LAYOUTS ============================ */
+/* Every mode fills n.LAY[mode] = {x,y} in world space (2-D modes) or n.p3 (3-D),
+   and e.PATH[mode] = sampled world polyline. One camera + one hit-tester serve all three. */
+N.forEach(n => { n.LAY = {}; });
+E.forEach(e => { e.PATH = {}; });
+
+/* --- layered (left to right by production tier) --- */
+N.forEach(n => n.LAY.layered = {x:n.x, y:n.y});
+E.forEach(e => {
+  const a = e[5].LAY.layered, b = e[6].LAY.layered, back = e[6].c <= e[5].c, dx = Math.abs(e[6].c - e[5].c);
+  const A = {x:a.x + 12, y:a.y}, B = {x:b.x - 12, y:b.y};
+  let c1, c2;
+  if (back){ const bow = 40 + dx*0.25; c1 = {x:A.x + 90, y:A.y - bow}; c2 = {x:B.x - 90, y:B.y - bow}; }
+  else { const h = Math.max(60, dx*0.45); c1 = {x:A.x + h, y:A.y}; c2 = {x:B.x - h, y:B.y}; }
+  const out = [];
+  for (let i = 0; i <= 20; i++){ const t = i/20, u = 1 - t;
+    out.push({ x:u*u*u*A.x + 3*u*u*t*c1.x + 3*u*t*t*c2.x + t*t*t*B.x,
+               y:u*u*u*A.y + 3*u*u*t*c1.y + 3*u*t*t*c2.y + t*t*t*B.y }); }
+  e.PATH.layered = out;
+});
+const BOUNDS = { layered: {x0:0, y0:-30, x1:W, y1:H + 30} };
+
+/* --- unlock: one column per derived step --- */
+const NODE_R = 19, ROW_H = 132, COL_W = 104;
+{
+  /* Layered tree drawing. Rows are unlock steps. Any edge spanning more than one row gets
+     an invisible WAYPOINT in every row it crosses, so it takes a slot in the ordering and
+     bends around the nodes instead of cutting a straight line across three rows. Then the
+     barycentre sweep orders real nodes and waypoints together. */
+  const rows = [], item = {}, fwd = {}, back = {}, chain = {};
+  const push = (r, it) => { (rows[r] = rows[r] || []).push(it); return it; };
+  const link = (a, b) => { (fwd[a] = fwd[a] || []).push(b); (back[b] = back[b] || []).push(a); };
+  N.forEach(n => { item[n.id] = push(n.step, { id:n.id, node:n }); });
+
+  DAGSET.forEach(k => {
+    const [a, b] = k.split(">"), sa = byId[a].step, sb = byId[b].step;
+    if (sb - sa <= 1){ link(a, b); return; }
+    let prev = a; const ds = [];
+    for (let r = sa + 1; r < sb; r++){
+      const did = k + "#" + r;
+      item[did] = push(r, { id:did, row:r });
+      ds.push(item[did]); link(prev, did); prev = did;
+    }
+    link(prev, b); chain[k] = ds;
+  });
+
+  for (let r = 0; r <= MAXSTEP; r++) if (!rows[r]) rows[r] = [];
+  const setX = row => { const off = -(row.length - 1)*COL_W/2;
+                        row.forEach((it, i) => it.tx = off + i*COL_W); };
+  rows.forEach(setX);
+  const mean = (it, adj) => {
+    const ps = (adj[it.id] || []).map(id => item[id]).filter(Boolean);
+    return ps.length ? ps.reduce((t, m) => t + m.tx, 0)/ps.length : it.tx;
+  };
+  for (let pass = 0; pass < 12; pass++){
+    for (let r = 1; r <= MAXSTEP; r++){
+      rows[r].forEach(it => it.bx = mean(it, back));
+      rows[r].sort((a, b) => a.bx - b.bx); setX(rows[r]);
+    }
+    for (let r = MAXSTEP - 1; r >= 0; r--){
+      rows[r].forEach(it => it.bx = mean(it, fwd));
+      rows[r].sort((a, b) => a.bx - b.bx); setX(rows[r]);
+    }
+  }
+
+  /* transpose: swap adjacent pairs wherever it removes a crossing. Barycentre gets the
+     ordering close; this squeezes out what it leaves behind. */
+  const layerCross = r => {
+    const idx = new Map(); rows[r - 1].forEach((it, i) => idx.set(it.id, i));
+    const es = [];
+    rows[r].forEach((it, i) => (back[it.id] || []).forEach(pid => {
+      if (idx.has(pid)) es.push([idx.get(pid), i]); }));
+    let c = 0;
+    for (let i = 0; i < es.length; i++) for (let j = i + 1; j < es.length; j++)
+      if ((es[i][0] - es[j][0])*(es[i][1] - es[j][1]) < 0) c++;
+    return c;
+  };
+  const around = r => layerCross(r) + (r < MAXSTEP ? layerCross(r + 1) : 0);
+  for (let guard = 0, moved = true; moved && guard < 10; guard++){
+    moved = false;
+    for (let r = 1; r <= MAXSTEP; r++){
+      for (let i = 0; i < rows[r].length - 1; i++){
+        const before = around(r);
+        const t = rows[r][i]; rows[r][i] = rows[r][i + 1]; rows[r][i + 1] = t;
+        if (around(r) < before) moved = true;
+        else { const u = rows[r][i]; rows[r][i] = rows[r][i + 1]; rows[r][i + 1] = u; }
+      }
+    }
+  }
+  rows.forEach(setX);
+
+  let x0 = 1e9, x1 = -1e9;
+  N.forEach(n => { const it = item[n.id];
+    n.LAY.unlock = { x: it.tx, y: n.step*ROW_H };
+    x0 = Math.min(x0, it.tx); x1 = Math.max(x1, it.tx); });
+  Object.keys(chain).forEach(k => chain[k].forEach(d => {
+    d.px = d.tx; d.py = d.row*ROW_H;
+    x0 = Math.min(x0, d.tx); x1 = Math.max(x1, d.tx);
+  }));
+
+  /* Catmull-Rom through the waypoints so a routed edge reads as one continuous line */
+  const spline = pts => {
+    const out = [];
+    for (let i = 0; i < pts.length - 1; i++){
+      const p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || pts[i + 1];
+      for (let j = 0; j < 12; j++){
+        const t = j/12, t2 = t*t, t3 = t2*t;
+        out.push({
+          x: .5*(2*p1.x + (-p0.x + p2.x)*t + (2*p0.x - 5*p1.x + 4*p2.x - p3.x)*t2 + (-p0.x + 3*p1.x - 3*p2.x + p3.x)*t3),
+          y: .5*(2*p1.y + (-p0.y + p2.y)*t + (2*p0.y - 5*p1.y + 4*p2.y - p3.y)*t2 + (-p0.y + 3*p1.y - 3*p2.y + p3.y)*t3) });
+      }
+    }
+    out.push(pts[pts.length - 1]);
+    return out;
+  };
+
+  E.forEach(e => {
+    const a = e[5].LAY.unlock, b = e[6].LAY.unlock, ds = chain[e[0] + ">" + e[1]];
+    const A = { x:a.x, y:a.y + NODE_R + 2 }, B = { x:b.x, y:b.y - NODE_R - 2 };
+    if (ds && ds.length){
+      e.PATH.unlock = spline([A, ...ds.map(d => ({ x:d.px, y:d.py })), B]);
+    } else {
+      const d = (B.y - A.y)*0.45, out = [];
+      const c1 = { x:A.x, y:A.y + d }, c2 = { x:B.x, y:B.y - d };
+      for (let i = 0; i <= 18; i++){ const t = i/18, u = 1 - t;
+        out.push({ x:u*u*u*A.x + 3*u*u*t*c1.x + 3*u*t*t*c2.x + t*t*t*B.x,
+                   y:u*u*u*A.y + 3*u*u*t*c1.y + 3*u*t*t*c2.y + t*t*t*B.y }); }
+      e.PATH.unlock = out;
+    }
+  });
+  BOUNDS.unlock = { x0:x0 - 90, y0:-70, x1:x1 + 90, y1:MAXSTEP*ROW_H + 60 };
+}
+
+/* --- rings: one concentric ring per tier, inner = sources, outer = market --- */
+const RING = [];
+colNodes.forEach((g, ci) => {
+  const R = 250 + ci * 200;
+  RING.push(R);
+  g.forEach((n, j) => {
+    const a = (j / g.length) * Math.PI * 2 + ci * 0.19 - Math.PI/2;
+    n.LAY.rings = { x: Math.cos(a) * R, y: Math.sin(a) * R, a, R };
+  });
+});
+const RMAX = RING[RING.length - 1];
+E.forEach(e => {
+  const a = e[5].LAY.rings, b = e[6].LAY.rings;
+  /* pull the chord toward the centre so the ring interiors stay readable */
+  const same = Math.abs(a.R - b.R) < 1;
+  const mx = (a.x + b.x)/2, my = (a.y + b.y)/2;
+  const k = same ? 0.62 : 0.42;
+  const c = { x: mx * (1 - k), y: my * (1 - k) };
+  const out = [];
+  for (let i = 0; i <= 18; i++){ const t = i/18, u = 1 - t;
+    out.push({ x:u*u*a.x + 2*u*t*c.x + t*t*b.x, y:u*u*a.y + 2*u*t*c.y + t*t*b.y }); }
+  e.PATH.rings = out;
+});
+BOUNDS.rings = { x0:-RMAX - 190, y0:-RMAX - 120, x1:RMAX + 190, y1:RMAX + 120 };
+
+/* --- 3-D: each tier is a disc, stacked along the view axis, big tiers split into two rings --- */
+const ZS = 340, colCount = cols.length;
+colNodes.forEach((g, ci) => {
+  const z = (ci - (colCount - 1)/2) * ZS, n0 = g.length, rings = n0 > 13 ? 2 : 1, per = Math.ceil(n0/rings);
+  g.forEach((n, j) => {
+    const ring = j % rings, idx = (j - ring)/rings;
+    const R = 165 + ring * 145, a = (idx/per) * Math.PI * 2 + ring * 0.42 + ci * 0.33;
+    n.p3 = { x: Math.cos(a) * R, y: Math.sin(a) * R * 0.82, z };
+  });
+});
+E.forEach(e => {
+  const a = e[5].p3, b = e[6].p3;
+  const m = {x:(a.x + b.x)/2, y:(a.y + b.y)/2, z:(a.z + b.z)/2};
+  const rl = Math.hypot(m.x, m.y) || 1, same = Math.abs(a.z - b.z) < 1;
+  const c = { x: m.x + m.x/rl * (same ? 120 : 55), y: m.y + m.y/rl * (same ? 120 : 55), z: m.z + (same ? 150 : 0) };
+  const out = [];
+  for (let i = 0; i <= 16; i++){ const t = i/16, u = 1 - t;
+    out.push({ x:u*u*a.x + 2*u*t*c.x + t*t*b.x, y:u*u*a.y + 2*u*t*c.y + t*t*b.y, z:u*u*a.z + 2*u*t*c.z + t*t*b.z }); }
+  e.PATH.threeD = out;
+});
+
+/* --- systems: one cluster per scoring system, land group and water group apart --- */
+const SYSKEYS = ["food","soil","poll","pest","gas","water"];
+const SYSLABEL = {food:"Food", soil:"Soil", poll:"Pollination", pest:"Pest & weed",
+                  gas:"Biogas", water:"Water quality", none:"Unscored services"};
+const SYSCOL = {food:()=>P.grain, gas:()=>P.grain, soil:()=>P.pasture, poll:()=>P.pasture,
+                pest:()=>P.pasture, water:()=>P.tide, none:()=>P.util};
+/* Placement is by SPECIALISM, not by top score. Food is universal by design, so ranking on
+   it just piles two thirds of the roster into one well. An entity is placed under a service
+   system only where it is a genuine specialist (|v| >= 4; >= 3 for the shorter water scale),
+   and otherwise falls back to Food. */
+const SPEC_MIN = { soil:4, poll:4, pest:4, gas:4, water:3 };
+function homeSystem(n){
+  if (!n.s) return "none";
+  let best = null, bv = 0;
+  SYSKEYS.forEach((k, i) => {
+    if (k === "food") return;
+    const v = n.s[i]; if (v === null) return;
+    const m = Math.abs(v);
+    if (m >= SPEC_MIN[k] && m > bv){ bv = m; best = k; }
+  });
+  if (best) return best;
+  return (n.s[0] || 0) >= 1 ? "food" : "none";
+}
+/* how many entities reach a meaningful score in each system, wherever they are placed */
+function contributors(k){
+  const i = SYSKEYS.indexOf(k);
+  return N.filter(n => n.s && n.s[i] !== null && Math.abs(n.s[i]) >= 3).length;
+}
+const CLUSTERS = [];
+{
+  const keys = ["none", ...SYSKEYS];
+  const groups = {}; keys.forEach(k => groups[k] = []);
+  N.forEach(n => groups[homeSystem(n)].push(n));
+  keys.forEach((k, ki) => {
+    const g = groups[k], cnt = g.length;
+    const R = 34*Math.sqrt(Math.max(cnt, 1)) + 46;
+    let cx = 0, cy = 0;
+    if (k !== "none"){
+      const a = ((ki - 1)/SYSKEYS.length)*Math.PI*2 - Math.PI/2;
+      cx = Math.cos(a)*640; cy = Math.sin(a)*640;
+    }
+    CLUSTERS.push({key:k, label:SYSLABEL[k], cx, cy, R, count:cnt, col:SYSCOL[k],
+                   contrib: k === "none" ? null : contributors(k)});
+    g.forEach((n, i) => {                       /* phyllotaxis keeps the packing even */
+      const a = i*2.39996, rr = 30*Math.sqrt(i + 0.55);
+      n.LAY.systems = { x: cx + Math.cos(a)*rr, y: cy + Math.sin(a)*rr };
+    });
+  });
+}
+E.forEach(e => {
+  const a = e[5].LAY.systems, b = e[6].LAY.systems;
+  const mx = (a.x + b.x)/2, my = (a.y + b.y)/2;
+  const dx = b.x - a.x, dy = b.y - a.y, L = Math.hypot(dx, dy) || 1;
+  const c = { x: mx - dy/L*L*0.13, y: my + dx/L*L*0.13 };
+  const out = [];
+  for (let i = 0; i <= 18; i++){ const t = i/18, u = 1 - t;
+    out.push({ x:u*u*a.x + 2*u*t*c.x + t*t*b.x, y:u*u*a.y + 2*u*t*c.y + t*t*b.y }); }
+  e.PATH.systems = out;
+});
+{
+  const xs = N.map(n => n.LAY.systems.x), ys = N.map(n => n.LAY.systems.y);
+  BOUNDS.systems = { x0:Math.min(...xs) - 150, y0:Math.min(...ys) - 190,
+                     x1:Math.max(...xs) + 150, y1:Math.max(...ys) + 150 };
+}
+
+/* --- chain: everything upstream and downstream of the selected entity, rebuilt on select --- */
+const CHAIN_DEPTH = 3, CHAIN_GAP = 46, CHAIN_STEP = 280;
+function buildChain(){
+  const depth = new Map([[selId, 0]]);
+  for (const dir of [-1, 1]){
+    let frontier = [selId];
+    for (let d = 1; d <= CHAIN_DEPTH; d++){
+      const next = [];
+      for (const id of frontier){
+        const links = dir === 1 ? byId[id].out : byId[id].in;
+        for (const e of links){
+          const other = dir === 1 ? e[1] : e[0];
+          if (depth.has(other)) continue;
+          depth.set(other, dir*d); next.push(other);
+        }
+      }
+      frontier = next;
+    }
+  }
+  const buckets = {};
+  N.forEach(n => {
+    if (!depth.has(n.id)){ delete n.LAY.chain; return; }
+    const d = depth.get(n.id);
+    (buckets[d] = buckets[d] || []).push(n);
+  });
+  let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+  Object.keys(buckets).forEach(k => {
+    const d = +k, g = buckets[k], off = -(g.length - 1)*CHAIN_GAP/2;
+    g.forEach((n, i) => {
+      n.LAY.chain = { x: d*CHAIN_STEP, y: off + i*CHAIN_GAP };
+      x0 = Math.min(x0, n.LAY.chain.x); x1 = Math.max(x1, n.LAY.chain.x);
+      y0 = Math.min(y0, n.LAY.chain.y); y1 = Math.max(y1, n.LAY.chain.y);
+    });
+  });
+  E.forEach(e => {
+    const a = e[5].LAY.chain, b = e[6].LAY.chain;
+    if (!a || !b || a === b){ delete e.PATH.chain; return; }
+    const A = {x:a.x + 12, y:a.y}, B = {x:b.x - 12, y:b.y};
+    const h = Math.max(60, Math.abs(B.x - A.x)*0.45);
+    const back = B.x <= A.x, bow = back ? 46 : 0;
+    const c1 = {x:A.x + h, y:A.y - bow}, c2 = {x:B.x - h, y:B.y - bow};
+    const out = [];
+    for (let i = 0; i <= 20; i++){ const t = i/20, u = 1 - t;
+      out.push({ x:u*u*u*A.x + 3*u*u*t*c1.x + 3*u*t*t*c2.x + t*t*t*B.x,
+                 y:u*u*u*A.y + 3*u*u*t*c1.y + 3*u*t*t*c2.y + t*t*t*B.y }); }
+    e.PATH.chain = out;
+  });
+  BOUNDS.chain = { x0:x0 - 190, y0:y0 - 60, x1:x1 + 190, y1:y1 + 60 };
+}
+
+/* ============================ RENDER ============================ */
+const cv = document.getElementById("cv"), ctx = cv.getContext("2d"),
+      stage = document.getElementById("stage"), tip = document.getElementById("tip");
+let cam = {x:0, y:0, z:1}, cam3 = {yaw:-0.62, pitch:0.34, dist:2350, panx:0, pany:0};
+let DPR = 1, RW = 0, RH = 0, mode = "layered";
+let hoverE = null, hoverN = null, selId = "wheat", filter = null, query = "", drag = null, codex = false;
+const reduce = matchMedia("(prefers-reduced-motion:reduce)").matches;
+const FOV = 1500, is3D = () => mode === "threeD";
+
+const CSS = k => getComputedStyle(document.documentElement).getPropertyValue(k).trim();
+let P = {};
+function readTheme(){
+  P = { ink:CSS("--ink"), ink2:CSS("--ink-2"), muted:CSS("--muted"), line:CSS("--line"),
+        grain:CSS("--grain"), pasture:CSS("--pasture"), tide:CSS("--tide"), clay:CSS("--clay"),
+        util:CSS("--util"), surf:CSS("--surface"), paper:CSS("--paper"), surf2:CSS("--surface-2") };
+}
+const KIND = { crop:()=>P.pasture, cover:()=>P.pasture, tree:()=>P.clay, fungus:()=>P.clay,
+  stock:()=>P.grain, aqua:()=>P.tide, bldg:()=>P.ink2, site:()=>P.tide, util:()=>P.util, system:()=>P.tide };
+const ECOL = { mat:()=>P.ink2, agro:()=>P.pasture, poll:()=>P.grain, aqua:()=>P.tide, util:()=>P.util, pwr:()=>P.util };
+const EDASH = { mat:[], agro:[6,4], poll:[2,4], aqua:[7,4], util:[1,4], pwr:[1,4] };
+const SYSEDGE = { soil:["agro"], poll:["poll"], water:["aqua"], food:["mat"], gas:["mat"], pest:["agro"] };
+const SIDX = { food:0, soil:1, poll:2, pest:3, gas:4, water:5 };
+const KLABEL = { crop:"Field crop", cover:"Cover & support crop", tree:"Orchard & berry", fungus:"Fungus",
+  stock:"Livestock", aqua:"Aquatic species", bldg:"Building", site:"Production site · proposed",
+  util:"Utility & service", system:"Shared system" };
+const EKIND = { mat:"Material flow", agro:"Agronomic effect", poll:"Pollination", aqua:"Water & nutrients", util:"Service", pwr:"Energy" };
+
+function proj(p){
+  const cy = Math.cos(cam3.yaw), sy = Math.sin(cam3.yaw);
+  const x1 = p.x*cy - p.z*sy, z1 = p.x*sy + p.z*cy;
+  const cp = Math.cos(cam3.pitch), sp = Math.sin(cam3.pitch);
+  const y1 = p.y*cp - z1*sp, z2 = p.y*sp + z1*cp;
+  const d = z2 + cam3.dist;
+  if (d < 120) return null;
+  const s = FOV/d;
+  return { x: RW/2 + x1*s + cam3.panx, y: RH/2 + y1*s + cam3.pany, s, d };
+}
+/* one projection pass per frame; render and hit-testing both read n.sx / e.sp */
+function computeScreen(){
+  if (is3D()){
+    for (const n of N){ const q = proj(n.p3); if (!q){ n.sx = null; continue; } n.sx = q.x; n.sy = q.y; n.ss = q.s; n.sd = q.d; }
+    for (const e of E){
+      const p = e.PATH.threeD, sp = []; let dsum = 0, ok = true;
+      for (const q of p){ const r = proj(q); if (!r){ ok = false; break; } sp.push(r); dsum += r.d; }
+      e.sp = ok ? sp : null; e.sd = dsum/p.length; e.ss = ok ? FOV/e.sd : 0;
+    }
+  } else {
+    const dagOnly = (mode === "unlock");
+    for (const n of N){ const w = n.LAY[mode];
+      if (!w){ n.sx = null; continue; }
+      n.sx = w.x*cam.z + cam.x; n.sy = w.y*cam.z + cam.y; n.ss = cam.z; n.sd = 1; }
+    for (const e of E){ const w = e.PATH[mode];
+      if (!w || (dagOnly && !DAGSET.has(e[0] + ">" + e[1]))){ e.sp = null; continue; }
+      e.sp = w.map(q => ({ x:q.x*cam.z + cam.x, y:q.y*cam.z + cam.y })); e.ss = cam.z; e.sd = 1; }
+  }
+}
+function nodeMatch(n){
+  if (query && !n.n.toLowerCase().includes(query)) return false;
+  if (!filter) return true;
+  if (!n.s) return false;
+  const v = n.s[SIDX[filter]];
+  return v !== null && Math.abs(v) >= 2;
+}
+function edgeMatch(e){
+  if (filter && !SYSEDGE[filter].includes(e[4])) return false;
+  if (query) return e[5].n.toLowerCase().includes(query) || e[6].n.toLowerCase().includes(query);
+  return true;
+}
+const connected = e => e[0] === selId || e[1] === selId;
+
+/* the selected node's full prerequisite ancestry and everything it goes on to open */
+const DAGFWD = DAGFWD_RAW, DAGBACK = DAGBACK_RAW;
+let famEdges = new Set(), famNodes = new Set();
+/* 39 of 82 entities have no prerequisite at all - seed you buy, utilities, the hatchery.
+   Nothing opens them, so their real gate is the price. Show it. */
+const ROOTED = new Set(N.map(n => n.id).filter(id => !(DAGBACK[id] || []).length));
+const COST = {}, ECONBY = {};
+function buildFamily(){
+  famEdges = new Set(); famNodes = new Set([selId]);
+  for (const [adj, fwd] of [[DAGBACK, false], [DAGFWD, true]]){
+    const seen = new Set([selId]); let q = [selId];
+    while (q.length){
+      const next = [];
+      for (const id of q) for (const o of (adj[id] || [])){
+        famEdges.add(fwd ? id + ">" + o : o + ">" + id);
+        famNodes.add(o);
+        if (!seen.has(o)){ seen.add(o); next.push(o); }
+      }
+      q = next;
+    }
+  }
+}
+
+/* skill-tree node: an icon disc with the name captioned beneath it */
+function drawTile(n, isSel){
+  const z = Math.max(n.ss, .35), r = NODE_R*z, col = KIND[n.k]();
+  const st = n.tier;                              // 2 owned · 1 available · 0 locked
+  const inFam = famNodes.has(n.id);
+  const dimmed = (filter || query) ? !nodeMatch(n) : false;
+  ctx.globalAlpha = dimmed ? .16 : (st === 0 ? .5 : 1);
+  if (st === 1 && !dimmed){ ctx.shadowColor = col; ctx.shadowBlur = 13*z; }
+  ctx.beginPath(); ctx.arc(n.sx, n.sy, r, 0, 7);
+  ctx.fillStyle = st === 2 ? P.surface : P.paper; ctx.fill();
+  ctx.lineWidth = (isSel ? 3.4 : st === 0 ? 1.2 : 2.4)*z;
+  ctx.strokeStyle = isSel ? P.ink : st === 0 ? P.line : col;
+  if (st === 0) ctx.setLineDash([3.5*z, 3*z]);
+  ctx.stroke(); ctx.shadowBlur = 0; ctx.setLineDash([]);
+  if (inFam && !isSel && !dimmed){
+    ctx.beginPath(); ctx.arc(n.sx, n.sy, r + 4*z, 0, 7);
+    ctx.strokeStyle = P.grain; ctx.lineWidth = 1.4*z; ctx.globalAlpha = .75; ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+  const gs = r*1.15;
+  if (gs >= 7){
+    ctx.globalAlpha *= st === 0 ? .45 : 1;
+    ctx.font = gs + 'px ' + EMOFONT;
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText(n.g, n.sx, n.sy + gs*0.06);
+    ctx.globalAlpha = dimmed ? .16 : (st === 0 ? .5 : 1);
+  }
+  const fs = 10.5*z;
+  if (fs >= 6.5){
+    ctx.font = (isSel ? 600 : 500) + " " + fs + 'px "IBM Plex Sans",sans-serif';
+    ctx.fillStyle = st === 0 ? P.muted : (isSel ? P.ink : P.ink2);
+    ctx.textAlign = "center"; ctx.textBaseline = "top";
+    let t = n.n, max = (COL_W - 8)*z;
+    if (ctx.measureText(t).width > max){
+      while (t.length > 4 && ctx.measureText(t + "\u2026").width > max) t = t.slice(0, -1);
+      t += "\u2026";
+    }
+    ctx.fillText(t, n.sx, n.sy + r + 5*z);
+    if (ROOTED.has(n.id) && COST[n.id] !== undefined && fs >= 8){
+      ctx.font = (fs - 1) + 'px "IBM Plex Mono",ui-monospace,monospace';
+      ctx.fillStyle = P.muted;
+      ctx.fillText("¤" + fmt(COST[n.id]), n.sx, n.sy + r + 5*z + fs*1.25);
+    }
+  }
+  ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.globalAlpha = 1;
+}
+
+const t0 = performance.now();
+function draw(now){
+  requestAnimationFrame(draw);
+  if (!RW || !RH) return;
+  const time = (now - t0)/1000;
+  if (is3D() && !reduce && !drag && !hoverN && !hoverE) cam3.yaw += 0.0011;
+  computeScreen();
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.clearRect(0, 0, RW, RH);
+  const dim = !!(filter || query);
+  ctx.lineCap = "round";
+
+  if (mode === "unlock"){
+    ctx.textAlign = "left"; ctx.textBaseline = "middle";
+    const b = BOUNDS.unlock;
+    for (let k = 0; k <= MAXSTEP; k++){
+      const y = k*ROW_H*cam.z + cam.y;
+      ctx.beginPath(); ctx.moveTo(b.x0*cam.z + cam.x, y); ctx.lineTo(b.x1*cam.z + cam.x, y);
+      ctx.strokeStyle = P.line; ctx.globalAlpha = .45; ctx.lineWidth = 1; ctx.stroke();
+      ctx.globalAlpha = 1;
+      ctx.font = '600 ' + Math.max(9.5, 11*Math.min(cam.z, 1.3)) + 'px "IBM Plex Mono",ui-monospace,monospace';
+      ctx.fillStyle = P.muted;
+      ctx.fillText("STEP " + k, b.x0*cam.z + cam.x + 6, y - 11*Math.min(cam.z, 1.3));
+    }
+  }
+  if (mode === "systems"){                    /* cluster wells, named */
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    for (const c of CLUSTERS){
+      const x = c.cx*cam.z + cam.x, y = c.cy*cam.z + cam.y, R = c.R*cam.z;
+      ctx.beginPath(); ctx.arc(x, y, R, 0, 7);
+      ctx.strokeStyle = P.line; ctx.globalAlpha = .7; ctx.lineWidth = 1; ctx.stroke();
+      ctx.globalAlpha = 1;
+      ctx.font = '600 ' + Math.max(10, 12*Math.min(cam.z, 1.3)) + 'px "IBM Plex Mono",ui-monospace,monospace';
+      ctx.fillStyle = c.col();
+      ctx.fillText(c.label.toUpperCase() + "  " + c.count, x, y - R - 26);
+      if (c.contrib !== null){
+        ctx.font = Math.max(9, 10.5*Math.min(cam.z, 1.3)) + 'px "IBM Plex Mono",ui-monospace,monospace';
+        ctx.fillStyle = c.contrib <= 2 ? P.clay : P.muted;
+        ctx.fillText(c.contrib + " scoring 3+", x, y - R - 12);
+      }
+    }
+    ctx.textAlign = "left";
+  }
+  if (mode === "rings"){                       /* faint tier guides */
+    ctx.strokeStyle = P.line; ctx.globalAlpha = .5; ctx.lineWidth = 1;
+    for (const R of RING){ ctx.beginPath(); ctx.arc(cam.x, cam.y, R*cam.z, 0, 7); ctx.stroke(); }
+    ctx.globalAlpha = 1;
+  }
+
+  for (const e of (is3D() ? [...E].sort((a, b) => b.sd - a.sd) : E)){
+    const p = e.sp; if (!p) continue;
+    if (codex && (e[5].tier === 0 || e[6].tier === 0)) continue;
+    let on = edgeMatch(e), lit = hoverE === e || connected(e);
+    if (mode === "unlock"){
+      lit = hoverE === e || famEdges.has(e[0] + ">" + e[1]);
+      on = on && (e[5].tier > 0 && e[6].tier > 0);
+    }
+    const dep = is3D() ? Math.max(.22, Math.min(1, e.ss/0.62)) : 1;
+    const z = is3D() ? e.ss : cam.z;
+    ctx.beginPath(); ctx.moveTo(p[0].x, p[0].y);
+    for (let i = 1; i < p.length; i++) ctx.lineTo(p[i].x, p[i].y);
+    ctx.setLineDash(EDASH[e[4]].map(v => v*Math.max(z, .4)));
+    ctx.strokeStyle = ECOL[e[4]]();
+    ctx.globalAlpha = (hoverE === e ? 1 : lit ? .9 : (dim && !on) ? .04 : dim ? .5 : .19) * dep;
+    ctx.lineWidth = (hoverE === e ? 2.8 : lit ? 2 : 1.1) * Math.max(z, .5);
+    ctx.stroke(); ctx.setLineDash([]);
+    if (!reduce && (lit || (on && dim))){
+      const seg = p.length - 1;
+      const k = (time*0.28 + ((e[0].length*7 + e[1].length*3) % 10)/10) % 1;
+      const i = Math.min(seg - 1, Math.floor(k*seg)), f = k*seg - i, a = p[i], b = p[i+1];
+      const mx = a.x + (b.x - a.x)*f, my = a.y + (b.y - a.y)*f, dr = Math.max(2, 3*z);
+      ctx.beginPath(); ctx.arc(mx, my, dr, 0, 7);
+      ctx.fillStyle = ECOL[e[4]](); ctx.globalAlpha = dep; ctx.fill();
+      if (mode === "rings"){          /* name the commodity riding the line */
+        ctx.font = '500 10.5px "IBM Plex Mono",ui-monospace,monospace';
+        ctx.textAlign = "center"; ctx.textBaseline = "bottom";
+        ctx.lineWidth = 3.5; ctx.strokeStyle = P.paper; ctx.lineJoin = "round";
+        ctx.strokeText(e[2], mx, my - dr - 3);
+        ctx.fillText(e[2], mx, my - dr - 3);
+        ctx.textAlign = "left"; ctx.textBaseline = "middle";
+      }
+    }
+  }
+  ctx.globalAlpha = 1;
+
+  for (const n of (is3D() ? [...N].sort((a, b) => b.sd - a.sd) : N)){
+    if (n.sx === null) continue;
+    if (codex && n.tier === 0){                 /* never planted: a shape and nothing else */
+      const z0 = Math.max(n.ss, .35), r0 = 9*z0;
+      ctx.globalAlpha = .3; ctx.beginPath(); ctx.arc(n.sx, n.sy, r0, 0, 7);
+      ctx.setLineDash([3*z0, 3*z0]); ctx.strokeStyle = P.muted; ctx.lineWidth = 1.3;
+      ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1; continue;
+    }
+    const kd = (codex && n.tier === 1) ? .6 : 1;   /* observed: visible, not yet explained */
+    const on = nodeMatch(n), isSel = n.id === selId;
+    const near = isSel || E.some(e => connected(e) && (e[0] === n.id || e[1] === n.id));
+    const dep = is3D() ? Math.max(.3, Math.min(1, n.ss/0.62)) : 1;
+    if (mode === "unlock"){ drawTile(n, isSel); continue; }
+    ctx.globalAlpha = ((dim && !on && !near) ? .13 : 1) * dep * kd;
+    const col = KIND[n.k](), z = Math.max(n.ss, .35);
+    const r = (n.k === "system" ? 13 : (n.k === "bldg" || n.k === "site") ? 11.5 : 10.5) * z;
+    const gl = r*1.42, glyph = gl >= 8.5;        /* too small to read: fall back to a plain mark */
+    ctx.beginPath();
+    if (n.k === "bldg" || n.k === "site"){ const s = r*1.62; ctx.rect(n.sx - s/2, n.sy - s/2, s, s); }
+    else if (n.k === "util"){ const d = r*1.28; ctx.moveTo(n.sx, n.sy - d); ctx.lineTo(n.sx + d, n.sy); ctx.lineTo(n.sx, n.sy + d); ctx.lineTo(n.sx - d, n.sy); ctx.closePath(); }
+    else if (n.k === "system"){ for (let i = 0; i < 6; i++){ const a = i*Math.PI/3 - Math.PI/2, x = n.sx + r*1.2*Math.cos(a), y = n.sy + r*1.2*Math.sin(a); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); } ctx.closePath(); }
+    else ctx.arc(n.sx, n.sy, r, 0, 7);
+    const hollow = n.k === "bldg" || n.k === "util";
+    ctx.fillStyle = glyph ? P.paper : (hollow ? P.paper : col); ctx.fill();
+    ctx.lineWidth = (isSel ? 3 : n.k === "site" ? 2.2 : 1.7) * z;
+    ctx.strokeStyle = isSel ? P.ink : col;
+    if (n.k === "site") ctx.setLineDash([4*z, 3*z]);
+    ctx.stroke(); ctx.setLineDash([]);
+    if (glyph){
+      ctx.font = gl + 'px ' + EMOFONT;
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(n.g, n.sx, n.sy + gl*0.05);
+      ctx.textAlign = "left"; ctx.textBaseline = "middle";
+    }
+    if (hoverN === n){ ctx.beginPath(); ctx.arc(n.sx, n.sy, r + 5, 0, 7); ctx.strokeStyle = P.ink; ctx.lineWidth = 1; ctx.stroke(); }
+
+    const showLabel = is3D()
+      ? (isSel || near || hoverN === n || (n.ss > .52 && !dim) || (dim && on))
+      : (cam.z > .42 || isSel || near || (dim && on));
+    if (showLabel){
+      ctx.font = `${isSel ? 600 : 400} ${Math.max(9.5, 11.5*Math.min(z, 1.4))}px "IBM Plex Sans",sans-serif`;
+      ctx.fillStyle = isSel ? P.ink : P.ink2; ctx.textBaseline = "middle";
+      if (mode === "rings"){                    /* labels read outward from the centre */
+        const left = n.LAY.rings.x < 0;
+        ctx.textAlign = left ? "right" : "left";
+        ctx.fillText(n.n, n.sx + (left ? -(r + 6) : r + 6), n.sy + .5);
+        ctx.textAlign = "left";
+      } else ctx.fillText(n.n, n.sx + r + 6, n.sy + .5);
+    }
+  }
+  ctx.globalAlpha = 1;
+}
+
+/* ============================ CAMERA & INPUT ============================ */
+function fit(){
+  if (!RW) return;
+  if (is3D()){ cam3 = {yaw:-0.62, pitch:0.34, dist:2350, panx:0, pany:0}; return; }
+  if (mode === "chain" && !BOUNDS.chain) buildChain();
+  const b = BOUNDS[mode]; if (!b) return;
+  const bw = b.x1 - b.x0, bh = b.y1 - b.y0;
+  cam.z = Math.min(RW/bw, RH/bh) * 0.96;
+  cam.x = (RW - bw*cam.z)/2 - b.x0*cam.z;
+  cam.y = (RH - bh*cam.z)/2 - b.y0*cam.z;
+}
+function measure(){
+  const r = stage.getBoundingClientRect();
+  if (!r.width || !r.height) return false;
+  const first = !RW;
+  DPR = Math.min(devicePixelRatio || 1, 2);
+  RW = r.width; RH = r.height;
+  cv.width = Math.round(RW*DPR); cv.height = Math.round(RH*DPR);
+  if (first) fit();
+  return true;
+}
+new ResizeObserver(measure).observe(stage);
+addEventListener("resize", measure);
+
+const local = ev => { const r = stage.getBoundingClientRect(); return { x: ev.clientX - r.left, y: ev.clientY - r.top }; };
+function hit(m){
+  let bn = null, bd = 15;
+  if (mode === "unlock"){
+    for (const n of N){
+      if (n.sx === null) continue;
+      if (Math.hypot(n.sx - m.x, n.sy - m.y) <= (NODE_R + 4)*Math.max(n.ss, .35)) return {n:n};
+    }
+  } else {
+    for (const n of N){ if (n.sx === null) continue; const d = Math.hypot(n.sx - m.x, n.sy - m.y); if (d < bd){ bd = d; bn = n; } }
+  }
+  if (bn) return {n:bn};
+  let be = null, bed = 7;
+  for (const e of E){
+    const p = e.sp; if (!p) continue;
+    for (let i = 0; i < p.length - 1; i++){
+      const a = p[i], b = p[i+1], vx = b.x - a.x, vy = b.y - a.y, L = vx*vx + vy*vy;
+      let t = L ? ((m.x - a.x)*vx + (m.y - a.y)*vy)/L : 0; t = Math.max(0, Math.min(1, t));
+      const d = Math.hypot(m.x - (a.x + vx*t), m.y - (a.y + vy*t));
+      if (d < bed){ bed = d; be = e; }
+    }
+  }
+  return be ? {e:be} : {};
+}
+function showTip(m, h){
+  if (h.e){ const e = h.e;
+    tip.innerHTML = `<div class="k">${EKIND[e[4]]}</div><div class="t">${e[2]}</div>
+      <div class="r">${e[5].n} &rarr; ${e[6].n}</div><div class="w">${e[3]}</div>`;
+    tip.style.borderLeftColor = ECOL[e[4]]();
+  } else { const n = h.n;
+    const money = v => "¤" + fmt(v);
+    const r = ECONBY[n.id];
+    let stats = "";
+    if (r){
+      const gate = ROOTED.has(n.id) ? "bought outright" : "unlocked by chain";
+      const ret = r.pay ? r.pay + " days" : (r.roi ? r.roi.toFixed(1) + "× on outlay" : "—");
+      stats = `<div class="stats">
+        <span>Cost</span><b>${money(r.cost)}</b>
+        <span>Cycle</span><b>${r.cycle} days</b>
+        <span>Revenue</span><b>${money(r.rev)}</b>
+        <span>Running costs</span><b>${money(r.run)}</b>
+        <span>Profit</span><b class="${r.profit < 0 ? "neg" : "good"}">${money(r.profit)}</b>
+        <span>Margin</span><b class="${r.margin < 0 ? "neg" : ""}">${r.margin.toFixed(0)}%</b>
+        <span>Per day</span><b class="${r.day < 0 ? "neg" : ""}">¤${fmt(r.day)}</b>
+        <span>${r.pay ? "Payback" : "Return"}</span><b>${ret}</b>
+        ${r.sup ? `<span>Needs</span><b>${r.sup} fields</b>` : ""}
+        <span>Unlock</span><b>step ${n.step} · ${gate}</b>
+      </div>`;
+    }
+    let sys = "";
+    if (n.s){
+      const L = ["Fd","So","Po","Pe","Bg","Wa"];
+      sys = `<div class="sys">` + n.s.map((v, i) => v === null ? "" :
+        `<i class="${v >= 4 ? "hi" : v < 0 ? "dn" : ""}">${L[i]} ${v > 0 && (i === 1 || i === 3 || i === 5) ? "+" : ""}${v}</i>`).join("") + `</div>`;
+    }
+    tip.innerHTML = `<div class="k">${KLABEL[n.k]}</div><div class="t"><span class="g">${n.g}</span> ${n.n}</div>${stats}${sys}<div class="w">${n.note}</div>`;
+    tip.style.borderLeftColor = KIND[n.k]();
+  }
+  tip.style.opacity = 1;
+  tip.style.left = Math.min(Math.max(m.x, 165), Math.max(166, RW - 165)) + "px";
+  tip.style.top = Math.max(100, m.y - 14) + "px";
+}
+stage.addEventListener("pointerdown", ev => {
+  drag = {x:ev.clientX, y:ev.clientY, moved:0, cx:cam.x, cy:cam.y,
+          yaw:cam3.yaw, pitch:cam3.pitch, px:cam3.panx, py:cam3.pany, pan:ev.shiftKey};
+  stage.setPointerCapture(ev.pointerId); stage.classList.add("drag");
+});
+stage.addEventListener("pointerup", ev => {
+  stage.classList.remove("drag");
+  if (drag && drag.moved < 5){ const h = hit(local(ev)); if (h.n) select(h.n.id); }
+  drag = null;
+});
+stage.addEventListener("pointercancel", () => { drag = null; stage.classList.remove("drag"); });
+stage.addEventListener("pointerleave", () => { tip.style.opacity = 0; hoverE = hoverN = null; drag = null; stage.classList.remove("drag"); });
+stage.addEventListener("pointermove", ev => {
+  if (drag){
+    const dx = ev.clientX - drag.x, dy = ev.clientY - drag.y;
+    drag.moved += Math.abs(dx) + Math.abs(dy);
+    if (!is3D()){ cam.x = drag.cx + dx; cam.y = drag.cy + dy; }
+    else if (drag.pan){ cam3.panx = drag.px + dx; cam3.pany = drag.py + dy; }
+    else { cam3.yaw = drag.yaw + dx*0.006; cam3.pitch = Math.max(-1.2, Math.min(1.2, drag.pitch + dy*0.005)); }
+    tip.style.opacity = 0; return;
+  }
+  const m = local(ev), h = hit(m);
+  hoverE = h.e || null; hoverN = h.n || null;
+  if (h.e || h.n) showTip(m, h); else tip.style.opacity = 0;
+});
+stage.addEventListener("wheel", ev => {
+  ev.preventDefault();
+  if (!is3D()){
+    const m = local(ev), k = Math.exp(-ev.deltaY*0.0014), z = Math.max(.2, Math.min(3.5, cam.z*k));
+    cam.x = m.x - (m.x - cam.x)*(z/cam.z); cam.y = m.y - (m.y - cam.y)*(z/cam.z); cam.z = z;
+  } else cam3.dist = Math.max(700, Math.min(6000, cam3.dist*Math.exp(ev.deltaY*0.0012)));
+}, {passive:false});
+function zoomBy(k){
+  if (!is3D()){
+    const mx = RW/2, my = RH/2, z = Math.max(.2, Math.min(3.5, cam.z*k));
+    cam.x = mx - (mx - cam.x)*(z/cam.z); cam.y = my - (my - cam.y)*(z/cam.z); cam.z = z;
+  } else cam3.dist = Math.max(700, Math.min(6000, cam3.dist/k));
+}
+document.getElementById("zi").onclick = () => zoomBy(1.3);
+document.getElementById("zo").onclick = () => zoomBy(1/1.3);
+document.getElementById("zr").onclick = fit;
+
+const HINT = {
+  layered:"Tiers run left to right · drag to pan · scroll to zoom · hover a line to read the flow · click a node to inspect",
+  rings:"Each ring is a production tier, sources innermost · drag to pan · scroll to zoom · hover a line to read the flow",
+  threeD:"Each tier is a disc in depth · drag to orbit · shift-drag to pan · scroll to dolly · hover a line to read the flow",
+  systems:"Each entity sits under the system it serves most · the land systems and the water system never share a cluster",
+  chain:"Everything within three steps upstream and downstream of the selected entity · click any node to re-centre",
+  unlock:"Skill tree · solid tiles are owned, glowing are available, dashed are locked · click a tile to light its whole prerequisite path"
+};
+document.querySelectorAll("button.mode").forEach(b => b.onclick = () => {
+  mode = b.dataset.mode;
+  if (mode === "chain") buildChain();
+  document.querySelectorAll("button.mode").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+  document.querySelector(".hint").textContent = HINT[mode];
+  fit();
+});
+
+/* ============================ INSPECTOR ============================ */
+const SIGNED = new Set(["soil","pest","water"]);
+const SYS = [["food","Food",()=>P.grain],["soil","Soil",()=>P.pasture],["poll","Pollination",()=>P.pasture],
+             ["pest","Pest & weed",()=>P.pasture],["gas","Biogas",()=>P.grain],["water","Water quality",()=>P.tide]];
+function select(id){
+  selId = id; const n = byId[id];
+  if (mode === "chain"){ buildChain(); fit(); }
+  buildFamily();
+  document.getElementById("i-kind").textContent = KLABEL[n.k];
+  document.getElementById("i-name").innerHTML = `<span class="g">${n.g}</span> ${n.n}`;
+  document.getElementById("i-note").textContent = n.note;
+  const bars = document.getElementById("i-bars");
+  if (!n.s) bars.innerHTML = `<div style="grid-column:1/-1;font-size:13px;color:var(--muted)">Unscored — a utility or service asset with no biological input. These are the buildings that need a non-agricultural economic mechanic.</div>`;
+  else bars.innerHTML = SYS.map(([k, label, col], i) => {
+    const v = n.s[i];
+    if (v === null) return `<span class="bn">${label}</span><span class="bt na"></span><span class="bv na">—</span>`;
+    const neg = v < 0, mag = Math.abs(v)/5*100, fill = neg ? P.clay : col();
+    const style = SIGNED.has(k)
+      ? `${neg ? "right" : "left"}:50%;width:${mag/2}%;background:${fill}`
+      : `left:0;width:${mag}%;background:${fill}`;
+    return `<span class="bn">${label}</span><span class="bt${SIGNED.has(k) ? " ctr" : ""}"><i style="${style}"></i></span><span class="bv">${SIGNED.has(k) && v > 0 ? "+" : ""}${v}</span>`;
+  }).join("");
+  const row = e => {
+    const other = e[0] === id ? e[6] : e[5];
+    return `<li><button class="node-btn" data-go="${other.id}" title="${e[3].replace(/"/g, "&quot;")}">
+      <span class="dot" style="background:${ECOL[e[4]]()}"></span>
+      <span><span class="item">${e[2]}</span> <span class="to">${e[0] === id ? "to" : "from"} <span class="g sm">${other.g}</span> <b>${other.n}</b></span></span></button></li>`;
+  };
+  document.getElementById("i-in").innerHTML = n.in.length ? n.in.map(row).join("") : `<li style="color:var(--muted);font-size:13px">Nothing — this is a source.</li>`;
+  document.getElementById("i-out").innerHTML = n.out.length ? n.out.map(row).join("") : `<li style="color:var(--muted);font-size:13px">Nothing — this is a terminal sink.</li>`;
+  document.querySelectorAll("[data-go]").forEach(b => b.onclick = () => select(b.dataset.go));
+}
+
+/* ============================ LEGEND & CONTROLS ============================ */
+function legend(){
+  const SAMPLE = {crop:"🌽", tree:"🍎", stock:"🐄", aqua:"🦪", bldg:"🍞", site:"🕸️", util:"🔬", system:"🌊"};
+  const nk = [["crop","Crop / cover","circle"],["tree","Orchard & berry","circle"],["stock","Livestock & bees","circle"],
+              ["aqua","Aquatic species","circle"],["bldg","Building","square"],["site","Proposed site","square-d"],
+              ["util","Utility & service","diamond"],["system","Shared water column","hex"]];
+  document.getElementById("lg-nodes").innerHTML = nk.map(([k, l, shape]) => {
+    const c = KIND[k](), hollow = k === "bldg" || k === "util";
+    let s;
+    if (shape.startsWith("square")) s = `<rect x="9" y="3" width="14" height="14" fill="${hollow ? "none" : c}" stroke="${c}" stroke-width="1.8" ${shape === "square-d" ? 'stroke-dasharray="3 2"' : ""}/>`;
+    else if (shape === "diamond") s = `<path d="M16 2 24 10 16 18 8 10Z" fill="none" stroke="${c}" stroke-width="1.8"/>`;
+    else if (shape === "hex") s = `<path d="M16 2 23 6.5 23 13.5 16 18 9 13.5 9 6.5Z" fill="${c}" stroke="${c}" stroke-width="1.6"/>`;
+    else s = `<circle cx="16" cy="10" r="7" fill="${c}"/>`;
+    return `<div class="row"><svg width="34" height="20" viewBox="0 0 34 20">${s}</svg><span><span class="g sm">${SAMPLE[k]}</span> <b>${l}</b></span></div>`;
+  }).join("");
+  const ek = [["mat","Material flow","A physical commodity moves."],["agro","Agronomic effect","One crop changes the next — not a farm-wide buff."],
+              ["poll","Pollination","Visits set fruit and raise size and earliness."],["aqua","Water & nutrients","System 06: load added or recovered."],
+              ["util","Service","Capability, data or gear — no commodity."],["pwr","Energy","Heat and electricity."]];
+  document.getElementById("lg-edges").innerHTML = ek.map(([k, l, d]) =>
+    `<div class="row"><svg width="34" height="12" viewBox="0 0 34 12"><path d="M1 6 H33" fill="none" stroke="${ECOL[k]()}" stroke-width="2" stroke-dasharray="${EDASH[k].join(" ") || "0"}"/></svg><span><b>${l}</b> — ${d}</span></div>`).join("");
+}
+document.querySelectorAll("button.chip[data-sys]").forEach(b => b.onclick = () => {
+  const s = b.dataset.sys, on = filter === s;
+  document.querySelectorAll("button.chip[data-sys]").forEach(x => x.setAttribute("aria-pressed", "false"));
+  filter = on ? null : s;
+  if (!on) b.setAttribute("aria-pressed", "true");
+});
+document.getElementById("codexBtn").onclick = function(){
+  codex = !codex;
+  this.setAttribute("aria-pressed", String(codex));
+  const h = document.querySelector(".hint");
+  h.textContent = codex
+    ? "Codex preview: an early save. Dashed rings are never planted, faded nodes are planted but not yet studied."
+    : HINT[mode];
+};
+document.getElementById("q").addEventListener("input", ev => { query = ev.target.value.trim().toLowerCase(); });
+matchMedia("(prefers-color-scheme:dark)").addEventListener("change", () => { readTheme(); legend(); select(selId); });
+
+document.getElementById("t-nodes").textContent = N.length;
+document.getElementById("t-edges").textContent = E.length;
+
+/* ============================ ECONOMY TABLE ============================ */
+const ECON = [{"id":"potato","n":"Potato","k":"crop","t":0,"cost":1400,"cycle":95,"rev":9180,"run":2310,"profit":6870,"margin":74.8,"day":72,"pay":null,"roi":4.91,"rec":true,"sup":null,"up":[2100,1.15,3360,1.32],"note":"135 units @ 3.40","step":0,"pre":[]},{"id":"rootcellar","n":"Root Cellar","k":"bldg","t":0,"cost":27300,"cycle":112,"rev":25600,"run":5170,"profit":15000,"margin":58.5,"day":134,"pay":150,"roi":null,"rec":false,"sup":1.2,"up":[60100,1.6,131000,2.5],"note":"0.9 units/day × 5.94 value added","step":1,"pre":["potato","carrot"]},{"id":"lettuce","n":"Leaf lettuce","k":"crop","t":0,"cost":1050,"cycle":30,"rev":5040,"run":1430,"profit":3610,"margin":71.7,"day":121,"pay":null,"roi":3.44,"rec":true,"sup":null,"up":[1600,1.15,2520,1.32],"note":"40 units @ 3.00","step":1,"pre":["nursery"]},{"id":"carrot","n":"Carrot","k":"crop","t":0,"cost":900,"cycle":70,"rev":5040,"run":1460,"profit":3580,"margin":71.0,"day":51,"pay":null,"roi":3.98,"rec":true,"sup":null,"up":[1360,1.15,2160,1.32],"note":"70 units @ 3.60","step":0,"pre":[]},{"id":"coop","n":"Chicken Coop & Egg House","k":"bldg","t":0,"cost":441000,"cycle":112,"rev":450000,"run":183000,"profit":178000,"margin":39.7,"day":1590,"pay":185,"roi":null,"rec":false,"sup":1.4,"up":[970000,1.6,2120000,2.5],"note":"1.1 units/day × 4.54 value added","step":5,"pre":["chicken"]},{"id":"nursery","n":"Greenhouse Nursery","k":"bldg","t":0,"cost":18000,"cycle":112,"rev":12900,"run":5380,"profit":3930,"margin":30.4,"day":35,"pay":268,"roi":null,"rec":false,"sup":0.9,"up":[39600,1.6,86400,2.5],"note":"0.7 units/day × 8.64 value added","step":0,"pre":[]},{"id":"well","n":"Well","k":"util","t":0,"cost":8000,"cycle":112,"rev":5820,"run":896,"profit":3330,"margin":57.1,"day":30,"pay":182,"roi":null,"rec":false,"sup":null,"up":[17600,1.6,38400,2.5],"note":"service value 2.60/day","step":0,"pre":[]},{"id":"tower","n":"Water Tower","k":"util","t":0,"cost":14000,"cycle":112,"rev":7170,"run":1340,"profit":3020,"margin":42.2,"day":27,"pay":269,"roi":null,"rec":false,"sup":null,"up":[30800,1.6,67200,2.5],"note":"service value 3.20/day","step":0,"pre":[]},{"id":"chicken","n":"Chicken","k":"stock","t":0,"cost":8560,"cycle":112,"rev":15600,"run":6960,"profit":6880,"margin":44.2,"day":62,"pay":112,"roi":null,"rec":false,"sup":null,"up":[16300,1.3,30700,1.7],"note":"0.85 eggs/day @ 0.42","step":4,"pre":["feedmill"]},{"id":"flourmill","n":"Flour Mill","k":"bldg","t":1,"cost":482000,"cycle":112,"rev":616000,"run":176000,"profit":343000,"margin":55.7,"day":3070,"pay":123,"roi":null,"rec":false,"sup":2.2,"up":[1060000,1.6,2310000,2.5],"note":"1.7 units/day × 17.82 value added","step":3,"pre":["wheat"]},{"id":"housing","n":"Player Worker Housing","k":"util","t":1,"cost":79800,"cycle":112,"rev":61200,"run":15500,"profit":29700,"margin":48.5,"day":265,"pay":196,"roi":null,"rec":false,"sup":null,"up":[176000,1.6,383000,2.5],"note":"service value 13.00/day","step":1,"pre":[]},{"id":"fieldlab","n":"Field Laboratory","k":"util","t":1,"cost":88200,"cycle":112,"rev":68200,"run":21200,"profit":29400,"margin":43.1,"day":262,"pay":210,"roi":null,"rec":false,"sup":null,"up":[194000,1.6,423000,2.5],"note":"service value 14.50/day","step":1,"pre":[]},{"id":"packhouse","n":"Vegetable Packhouse","k":"bldg","t":1,"cost":79800,"cycle":112,"rev":76200,"run":32000,"profit":28300,"margin":37.1,"day":252,"pay":202,"roi":null,"rec":false,"sup":2.7,"up":[176000,1.6,383000,2.5],"note":"2.0 units/day × 8.10 value added","step":1,"pre":["potato","carrot"]},{"id":"irrig","n":"Irrigation Pump House","k":"util","t":1,"cost":46200,"cycle":112,"rev":44700,"run":9880,"profit":25600,"margin":57.2,"day":228,"pay":149,"roi":null,"rec":false,"sup":null,"up":[102000,1.6,222000,2.5],"note":"service value 9.50/day","step":1,"pre":[]},{"id":"workshop","n":"Equipment & Service Workshop","k":"util","t":1,"cost":67200,"cycle":112,"rev":51700,"run":15100,"profit":23300,"margin":44.9,"day":207,"pay":205,"roi":null,"rec":false,"sup":null,"up":[148000,1.6,323000,2.5],"note":"service value 11.00/day","step":1,"pre":[]},{"id":"market","n":"Farm Market Hall","k":"bldg","t":1,"cost":101000,"cycle":112,"rev":108000,"run":65900,"profit":21900,"margin":20.3,"day":196,"pay":268,"roi":null,"rec":false,"sup":4.7,"up":[222000,1.6,484000,2.5],"note":"3.5 units/day × 6.48 value added","step":1,"pre":["nursery"]},{"id":"silos","n":"Grain Silos","k":"bldg","t":1,"cost":269000,"cycle":112,"rev":179000,"run":43600,"profit":82000,"margin":45.7,"day":732,"pay":222,"roi":null,"rec":false,"sup":3.3,"up":[591000,1.6,1290000,2.5],"note":"2.5 units/day × 3.46 value added","step":3,"pre":["barley","wheat","fieldpea","corn"]},{"id":"compost","n":"Compost & Fertilizer Facility","k":"bldg","t":1,"cost":110000,"cycle":112,"rev":90700,"run":38500,"profit":30100,"margin":33.2,"day":269,"pay":237,"roi":null,"rec":false,"sup":1.9,"up":[243000,1.6,529000,2.5],"note":"1.4 units/day × 6.48 value added","step":2,"pre":["packhouse"]},{"id":"kiosk","n":"Claim Kiosk","k":"util","t":1,"cost":35700,"cycle":112,"rev":25900,"run":5170,"profit":13600,"margin":52.4,"day":121,"pay":193,"roi":null,"rec":false,"sup":null,"up":[78500,1.6,171000,2.5],"note":"service value 5.50/day","step":1,"pre":[]},{"id":"cabbage","n":"Cabbage","k":"crop","t":1,"cost":3530,"cycle":85,"rev":19100,"run":6230,"profit":12800,"margin":67.3,"day":151,"pay":null,"roi":3.64,"rec":true,"sup":null,"up":[5290,1.15,8470,1.32],"note":"45 units @ 4.80","step":2,"pre":["permitfield"]},{"id":"onion","n":"Onion","k":"crop","t":1,"cost":4410,"cycle":100,"rev":21200,"run":7760,"profit":13400,"margin":63.3,"day":134,"pay":null,"roi":3.04,"rec":true,"sup":null,"up":[6620,1.15,10600,1.32],"note":"60 units @ 4.00","step":2,"pre":["permitfield"]},{"id":"hayseed","n":"Hay & Seed Storage Barn","k":"bldg","t":1,"cost":144000,"cycle":112,"rev":84000,"run":24900,"profit":30200,"margin":36.0,"day":270,"pay":274,"roi":null,"rec":false,"sup":1.1,"up":[318000,1.6,693000,2.5],"note":"0.8 units/day × 4.86 value added","step":3,"pre":["redclover","alfalfa"]},{"id":"fieldpea","n":"Field pea","k":"crop","t":1,"cost":4410,"cycle":75,"rev":15900,"run":6390,"profit":9480,"margin":59.7,"day":126,"pay":null,"roi":2.15,"rec":true,"sup":null,"up":[6620,1.15,10600,1.32],"note":"40 units @ 4.50","step":2,"pre":["permitfield"]},{"id":"corn","n":"Corn","k":"crop","t":1,"cost":3970,"cycle":100,"rev":19800,"run":7670,"profit":12200,"margin":61.3,"day":122,"pay":null,"roi":3.07,"rec":true,"sup":null,"up":[6000,1.15,9530,1.32],"note":"75 units @ 3.00","step":2,"pre":["permitfield"]},{"id":"wheat","n":"Wheat","k":"crop","t":1,"cost":3530,"cycle":90,"rev":16900,"run":6310,"profit":10600,"margin":62.8,"day":118,"pay":null,"roi":3.01,"rec":true,"sup":null,"up":[5290,1.15,8470,1.32],"note":"60 units @ 3.20","step":2,"pre":["permitfield"]},{"id":"barley","n":"Barley","k":"crop","t":1,"cost":3090,"cycle":80,"rev":14100,"run":5340,"profit":8720,"margin":62.0,"day":109,"pay":null,"roi":2.83,"rec":true,"sup":null,"up":[4590,1.15,7410,1.32],"note":"55 units @ 2.90","step":2,"pre":["permitfield"]},{"id":"cerealrye","n":"Cereal rye","k":"crop","t":1,"cost":8560,"cycle":70,"rev":21400,"run":11300,"profit":10100,"margin":47.3,"day":144,"pay":null,"roi":1.18,"rec":true,"sup":null,"up":[12800,1.15,20600,1.32],"note":"25 units @ 2.20","step":4,"pre":["hayseed"]},{"id":"permitfield","n":"Field Deed","k":"util","t":1,"cost":12600,"cycle":112,"rev":5410,"run":1550,"profit":1340,"margin":24.7,"day":12,"pay":366,"roi":null,"rec":false,"sup":null,"up":[27700,1.6,60500,2.5],"note":"service value 1.15/day","step":1,"pre":["tower","nursery"]},{"id":"radish","n":"Forage radish","k":"crop","t":1,"cost":1590,"cycle":45,"rev":2650,"run":1950,"profit":697,"margin":26.5,"day":16,"pay":null,"roi":0.44,"rec":true,"sup":null,"up":[2380,1.15,3790,1.32],"note":"15 units @ 2.00","step":2,"pre":["permitfield"]},{"id":"redclover","n":"Red clover","k":"crop","t":1,"cost":2650,"cycle":60,"rev":1760,"run":3180,"profit":-1410,"margin":-80.0,"day":-24,"pay":null,"roi":-0.53,"rec":true,"sup":null,"up":[3970,1.15,6350,1.32],"note":"10 units @ 2.00","step":2,"pre":["permitfield"]},{"id":"creamery","n":"Creamery & Cheese House","k":"bldg","t":2,"cost":3430000,"cycle":112,"rev":5320000,"run":1690000,"profit":2940000,"margin":55.3,"day":26300,"pay":106,"roi":null,"rec":false,"sup":1.9,"up":[7550000,1.6,16500000,2.5],"note":"1.4 units/day × 41.04 value added","step":5,"pre":["dairybarn"]},{"id":"bakery","n":"Bakery & Grain Kitchen","k":"bldg","t":2,"cost":1210000,"cycle":112,"rev":1880000,"run":610000,"profit":1030000,"margin":54.8,"day":9200,"pay":106,"roi":null,"rec":false,"sup":1.7,"up":[2650000,1.6,5790000,2.5],"note":"1.2 units/day × 34.56 value added","step":4,"pre":["apple","flourmill","blueberry"]},{"id":"dairybarn","n":"Dairy Barn & Milking Parlour","k":"bldg","t":2,"cost":1320000,"cycle":112,"rev":1870000,"run":697000,"profit":905000,"margin":48.5,"day":8080,"pay":127,"roi":null,"rec":false,"sup":3.1,"up":[2910000,1.6,6350000,2.5],"note":"2.3 units/day × 18.36 value added","step":4,"pre":["dairy"]},{"id":"feedmill","n":"Feed Mill & Farm Supply","k":"bldg","t":2,"cost":537000,"cycle":112,"rev":686000,"run":239000,"profit":340000,"margin":49.6,"day":3040,"pay":134,"roi":null,"rec":false,"sup":3.9,"up":[1180000,1.6,2580000,2.5],"note":"2.9 units/day × 11.34 value added","step":3,"pre":["radish","barley","fieldpea","corn"]},{"id":"dairy","n":"Dairy cattle","k":"stock","t":2,"cost":445000,"cycle":112,"rev":552000,"run":135000,"profit":328000,"margin":59.5,"day":2930,"pay":119,"roi":null,"rec":false,"sup":null,"up":[845000,1.3,1600000,1.7],"note":"28 L/day @ 0.95","step":3,"pre":["permitstock","alfalfa"]},{"id":"mushhouse","n":"Mushroom Growing House","k":"bldg","t":2,"cost":315000,"cycle":112,"rev":485000,"run":129000,"profit":294000,"margin":60.5,"day":2620,"pay":99,"roi":null,"rec":false,"sup":1.1,"up":[693000,1.6,1510000,2.5],"note":"0.8 units/day × 28.08 value added","step":3,"pre":["barley","wheat"]},{"id":"lodge","n":"Worker Lodge & Dining Hall","k":"bldg","t":2,"cost":176000,"cycle":112,"rev":207000,"run":84000,"profit":87500,"margin":42.3,"day":781,"pay":161,"roi":null,"rec":false,"sup":1.7,"up":[388000,1.6,847000,2.5],"note":"1.2 units/day × 16.74 value added","step":2,"pre":["rootcellar","market"]},{"id":"estate","n":"Estate & Management Office","k":"util","t":2,"cost":238000,"cycle":112,"rev":158000,"run":39500,"profit":70900,"margin":44.9,"day":633,"pay":225,"roi":null,"rec":false,"sup":null,"up":[524000,1.6,1140000,2.5],"note":"service value 16.00/day","step":2,"pre":[]},{"id":"vet","n":"Veterinary Clinic","k":"util","t":2,"cost":159000,"cycle":112,"rev":123000,"run":37500,"profit":54200,"margin":43.9,"day":484,"pay":207,"roi":null,"rec":false,"sup":null,"up":[349000,1.6,762000,2.5],"note":"service value 12.50/day","step":2,"pre":[]},{"id":"pigbarn","n":"Pig Barn","k":"bldg","t":2,"cost":856000,"cycle":112,"rev":647000,"run":401000,"profit":75000,"margin":11.6,"day":669,"pay":389,"roi":null,"rec":false,"sup":1.7,"up":[1880000,1.6,4110000,2.5],"note":"1.2 units/day × 11.88 value added","step":4,"pre":["pig"]},{"id":"loadyard","n":"Livestock Loading Yard","k":"bldg","t":2,"cost":370000,"cycle":112,"rev":259000,"run":122000,"profit":62900,"margin":24.3,"day":560,"pay":303,"roi":null,"rec":false,"sup":1.3,"up":[813000,1.6,1770000,2.5],"note":"1.0 units/day × 5.94 value added","step":4,"pre":["dairy","sheep"]},{"id":"pig","n":"Pig","k":"stock","t":2,"cost":55600,"cycle":170,"rev":167000,"run":125000,"profit":41900,"margin":25.1,"day":246,"pay":null,"roi":0.75,"rec":true,"sup":null,"up":[106000,1.3,200000,1.7],"note":"carcass @ 900","step":3,"pre":["permitstock"]},{"id":"sheepfold","n":"Sheepfold & Wool Shed","k":"bldg","t":2,"cost":506000,"cycle":112,"rev":329000,"run":179000,"profit":49600,"margin":15.1,"day":443,"pay":376,"roi":null,"rec":false,"sup":0.9,"up":[1110000,1.6,2430000,2.5],"note":"0.7 units/day × 11.34 value added","step":4,"pre":["sheep"]},{"id":"alfalfa","n":"Alfalfa","k":"crop","t":2,"cost":3090,"cycle":70,"rev":8030,"run":3950,"profit":4070,"margin":50.8,"day":58,"pay":null,"roi":1.32,"rec":true,"sup":null,"up":[4590,1.15,7410,1.32],"note":"35 units @ 2.60","step":2,"pre":["permitfield"]},{"id":"sheep","n":"Sheep","k":"stock","t":2,"cost":48200,"cycle":112,"rev":44200,"run":22800,"profit":11800,"margin":26.6,"day":106,"pay":252,"roi":null,"rec":false,"sup":null,"up":[91500,1.3,173000,1.7],"note":"wool + one lamb/yr","step":3,"pre":["permitstock"]},{"id":"permitstock","n":"Livestock Licence","k":"util","t":2,"cost":44100,"cycle":112,"rev":19000,"run":5530,"profit":4610,"margin":24.3,"day":42,"pay":368,"roi":null,"rec":false,"sup":null,"up":[97000,1.6,212000,2.5],"note":"service value 1.92/day","step":2,"pre":["packhouse","market"]},{"id":"poulthatch","n":"Poultry Hatchery","k":"bldg","t":2,"cost":1890000,"cycle":112,"rev":1090000,"run":653000,"profit":58700,"margin":5.4,"day":532,"pay":485,"roi":null,"rec":false,"sup":1.0,"up":[4150000,1.6,9060000,2.5],"note":"0.8 units/day × 7.56 value added","step":6,"pre":["coop"]},{"id":"mustard","n":"Brown mustard","k":"crop","t":2,"cost":7780,"cycle":50,"rev":12000,"run":9530,"profit":2450,"margin":20.5,"day":51,"pay":null,"roi":0.32,"rec":true,"sup":null,"up":[11700,1.15,18700,1.32],"note":"14 units @ 2.20","step":4,"pre":["hayseed"]},{"id":"butchery","n":"Butchery & Smokehouse","k":"bldg","t":3,"cost":2940000,"cycle":112,"rev":4390000,"run":1460000,"profit":2340000,"margin":53.2,"day":20900,"pay":113,"roi":null,"rec":false,"sup":1.4,"up":[6470000,1.6,14100000,2.5],"note":"1.1 units/day × 44.28 value added","step":5,"pre":["loadyard"]},{"id":"cider","n":"Orchard Press & Cider House","k":"bldg","t":3,"cost":1090000,"cycle":112,"rev":1600000,"run":479000,"profit":903000,"margin":56.4,"day":8060,"pay":109,"roi":null,"rec":false,"sup":1.3,"up":[2400000,1.6,5230000,2.5],"note":"1.0 units/day × 36.72 value added","step":4,"pre":["apple","pear"]},{"id":"export","n":"Grain Export Terminal","k":"bldg","t":3,"cost":2530000,"cycle":112,"rev":2310000,"run":915000,"profit":889000,"margin":38.5,"day":7930,"pay":203,"roi":null,"rec":false,"sup":10.6,"up":[5560000,1.6,12100000,2.5],"note":"7.9 units/day × 6.70 value added","step":4,"pre":["silos"]},{"id":"coldstore","n":"Cold Storage Warehouse","k":"bldg","t":3,"cost":8230000,"cycle":112,"rev":8770000,"run":3840000,"profit":3290000,"margin":37.4,"day":29300,"pay":187,"roi":null,"rec":false,"sup":3.9,"up":[18100000,1.6,39500000,2.5],"note":"2.9 units/day × 15.66 value added","step":6,"pre":["packhouse","blueberry","apple","pear"]},{"id":"apiary","n":"Apiary & Honey House","k":"bldg","t":3,"cost":2570000,"cycle":112,"rev":3510000,"run":768000,"profit":2230000,"margin":63.4,"day":19900,"pay":105,"roi":null,"rec":false,"sup":0.8,"up":[5660000,1.6,12400000,2.5],"note":"0.6 units/day × 31.32 value added","step":6,"pre":["bee"]},{"id":"blueberry","n":"Blueberry","k":"tree","t":3,"cost":213000,"cycle":112,"rev":287000,"run":19700,"profit":225000,"margin":78.3,"day":2010,"pay":89,"roi":null,"rec":false,"sup":null,"up":[383000,1.25,724000,1.55],"note":"bears from year 3 · 165 units @ 9.40/yr","step":3,"pre":["nursery"]},{"id":"apple","n":"Apple","k":"tree","t":3,"cost":185000,"cycle":112,"rev":226000,"run":22800,"profit":166000,"margin":73.5,"day":1480,"pay":102,"roi":null,"rec":false,"sup":null,"up":[333000,1.25,630000,1.55],"note":"bears from year 4 · 265 units @ 4.60/yr","step":3,"pre":["nursery"]},{"id":"pear","n":"Pear","k":"tree","t":3,"cost":152000,"cycle":112,"rev":156000,"run":21800,"profit":103000,"margin":66.5,"day":924,"pay":127,"roi":null,"rec":false,"sup":null,"up":[273000,1.25,516000,1.55],"note":"bears from year 4 · 175 units @ 4.80/yr","step":3,"pre":["nursery"]},{"id":"bee","n":"European honey bee","k":"stock","t":3,"cost":278000,"cycle":112,"rev":252000,"run":20100,"profit":176000,"margin":69.9,"day":1570,"pay":134,"roi":null,"rec":false,"sup":null,"up":[528000,1.3,1000000,1.7],"note":"22 kg honey/yr @ 14","step":5,"pre":["permitgrove"]},{"id":"permitgrove","n":"Orchard Deed","k":"util","t":3,"cost":311000,"cycle":112,"rev":134000,"run":38800,"profit":33200,"margin":24.7,"day":296,"pay":365,"roi":null,"rec":false,"sup":null,"up":[685000,1.6,1490000,2.5],"note":"service value 3.08/day","step":4,"pre":["feedmill","hayseed"]},{"id":"buckwheat","n":"Buckwheat","k":"crop","t":3,"cost":7780,"cycle":45,"rev":16800,"run":9530,"profit":7270,"margin":43.3,"day":163,"pay":null,"roi":0.93,"rec":true,"sup":null,"up":[11700,1.15,18700,1.32],"note":"18 units @ 2.40","step":4,"pre":["hayseed"]},{"id":"biogas","n":"Biogas Plant","k":"bldg","t":4,"cost":2020000,"cycle":112,"rev":2070000,"run":610000,"profit":1060000,"margin":51.1,"day":9460,"pay":155,"roi":null,"rec":false,"sup":2.6,"up":[4450000,1.6,9710000,2.5],"note":"1.9 units/day × 24.84 value added","step":4,"pre":["lodge"]},{"id":"aquapon","n":"Aquaponics Greenhouse","k":"bldg","t":4,"cost":9610000,"cycle":112,"rev":8560000,"run":3840000,"profit":2800000,"margin":32.7,"day":25000,"pay":228,"roi":null,"rec":false,"sup":1.7,"up":[21100000,1.6,46100000,2.5],"note":"1.2 units/day × 35.64 value added","step":6,"pre":["permitgrid"]},{"id":"hydro","n":"Hydroponics Greenhouse","k":"bldg","t":4,"cost":8580000,"cycle":112,"rev":7880000,"run":4030000,"profit":2130000,"margin":27.1,"day":19100,"pay":250,"roi":null,"rec":false,"sup":1.8,"up":[18900000,1.6,41200000,2.5],"note":"1.3 units/day × 30.78 value added","step":6,"pre":["permitgrid"]},{"id":"vertfarm","n":"Vertical Farm","k":"bldg","t":4,"cost":7550000,"cycle":112,"rev":6900000,"run":3650000,"profit":1740000,"margin":25.2,"day":15500,"pay":260,"roi":null,"rec":false,"sup":2.1,"up":[16600000,1.6,36200000,2.5],"note":"1.6 units/day × 22.68 value added","step":6,"pre":["permitgrid"]},{"id":"solar","n":"Solar Microgrid","k":"util","t":4,"cost":6180000,"cycle":112,"rev":2980000,"run":173000,"profit":1570000,"margin":52.7,"day":14000,"pay":247,"roi":null,"rec":false,"sup":null,"up":[13600000,1.6,29600000,2.5],"note":"service value 15.50/day","step":6,"pre":["permitgrid"]},{"id":"robotics","n":"Agricultural Robotics Depot","k":"util","t":4,"cost":19500000,"cycle":112,"rev":9680000,"run":2500000,"profit":3290000,"margin":34.0,"day":29400,"pay":303,"roi":null,"rec":false,"sup":null,"up":[42800000,1.6,93400000,2.5],"note":"service value 24.00/day","step":7,"pre":["permitgrid"]},{"id":"wind","n":"Wind Turbine","k":"util","t":4,"cost":5150000,"cycle":112,"rev":2500000,"run":269000,"profit":1200000,"margin":48.0,"day":10700,"pay":259,"roi":null,"rec":false,"sup":null,"up":[11300000,1.6,24700000,2.5],"note":"service value 13.00/day","step":6,"pre":["permitgrid"]},{"id":"drone","n":"Drone Dock","k":"util","t":4,"cost":4460000,"cycle":112,"rev":2590000,"run":596000,"profit":1110000,"margin":42.6,"day":9880,"pay":250,"roi":null,"rec":false,"sup":null,"up":[9810000,1.6,21400000,2.5],"note":"service value 13.50/day","step":6,"pre":["permitgrid"]},{"id":"basil","n":"Basil & herbs","k":"crop","t":4,"cost":108000,"cycle":35,"rev":810000,"run":151000,"profit":660000,"margin":81.4,"day":18800,"pay":null,"roi":6.1,"rec":true,"sup":null,"up":[162000,1.15,259000,1.32],"note":"30 units @ 7.50","step":7,"pre":["hydro","aquapon","vertfarm"]},{"id":"tomato","n":"Tomato","k":"crop","t":4,"cost":25300,"cycle":110,"rev":162000,"run":51800,"profit":110000,"margin":68.0,"day":1000,"pay":null,"roi":4.35,"rec":true,"sup":null,"up":[38100,1.15,60700,1.32],"note":"80 units @ 5.20","step":4,"pre":["nursery"]},{"id":"permitgrid","n":"Utility Permit","k":"util","t":4,"cost":980000,"cycle":112,"rev":423000,"run":122000,"profit":105000,"margin":24.8,"day":939,"pay":365,"roi":null,"rec":false,"sup":null,"up":[2160000,1.6,4700000,2.5],"note":"service value 4.62/day","step":5,"pre":["export","bakery"]},{"id":"salmon","n":"Atlantic salmon","k":"aqua","t":5,"cost":3430000,"cycle":540,"rev":19400000,"run":7580000,"profit":11800000,"margin":60.9,"day":21900,"pay":null,"roi":3.44,"rec":true,"sup":null,"up":[5830000,1.45,10600000,1.9],"note":"430 fish @ 4.8 kg × 11.50","step":5,"pre":["feedmill"]},{"id":"aquahatch","n":"Aquaculture Hatchery","k":"bldg","t":5,"cost":7890000,"cycle":112,"rev":9340000,"run":3270000,"profit":4490000,"margin":48.1,"day":40100,"pay":146,"roi":null,"rec":false,"sup":2.2,"up":[17400000,1.6,37900000,2.5],"note":"1.7 units/day × 29.16 value added","step":6,"pre":["permitcoast"]},{"id":"salmonpen","n":"Salmon Pen & Marine Lease","k":"bldg","t":5,"cost":25900000,"cycle":112,"rev":24500000,"run":10500000,"profit":8870000,"margin":36.1,"day":79200,"pay":207,"roi":null,"rec":false,"sup":2.9,"up":[57100000,1.6,124000000,2.5],"note":"2.2 units/day × 28.08 value added","step":7,"pre":["aquahatch","boathouse"]},{"id":"shellease","n":"Shellfish & Kelp Lease","k":"bldg","t":5,"cost":13700000,"cycle":112,"rev":14000000,"run":3630000,"profit":7610000,"margin":54.4,"day":67900,"pay":148,"roi":null,"rec":false,"sup":2.4,"up":[30100000,1.6,65700000,2.5],"note":"1.8 units/day × 18.90 value added","step":7,"pre":["aquahatch","boathouse"]},{"id":"desal","n":"Desalination Plant","k":"util","t":5,"cost":10600000,"cycle":112,"rev":6340000,"run":1830000,"profit":2390000,"margin":37.7,"day":21300,"pay":264,"roi":null,"rec":false,"sup":null,"up":[23400000,1.6,51000000,2.5],"note":"service value 33.00/day","step":6,"pre":["permitcoast"]},{"id":"aquaproc","n":"Aquaculture Processing Plant","k":"bldg","t":5,"cost":50800000,"cycle":112,"rev":73700000,"run":44500000,"profit":19000000,"margin":25.8,"day":170000,"pay":195,"roi":null,"rec":false,"sup":2.2,"up":[112000000,1.6,244000000,2.5],"note":"1.7 units/day × 24.84 value added","step":9,"pre":["fishpack"]},{"id":"kelpshell","n":"Kelp & Shellfish Processing","k":"bldg","t":5,"cost":31000000,"cycle":112,"rev":46300000,"run":25800000,"profit":14300000,"margin":30.9,"day":128000,"pay":169,"roi":null,"rec":false,"sup":1.9,"up":[68100000,1.6,149000000,2.5],"note":"1.4 units/day × 18.36 value added","step":9,"pre":["mussel","oyster","kelp"]},{"id":"trout","n":"Rainbow trout","k":"aqua","t":5,"cost":719000,"cycle":330,"rev":3500000,"run":1550000,"profit":1950000,"margin":55.6,"day":5910,"pay":null,"roi":2.71,"rec":true,"sup":null,"up":[1220000,1.45,2230000,1.9],"note":"300 fish @ 1.1 kg × 13.00","step":5,"pre":["feedmill"]},{"id":"boathouse","n":"Boathouse & Net Loft","k":"util","t":5,"cost":3950000,"cycle":112,"rev":2690000,"run":653000,"profit":1250000,"margin":46.4,"day":11100,"pay":217,"roi":null,"rec":false,"sup":null,"up":[8680000,1.6,18900000,2.5],"note":"service value 14.00/day","step":6,"pre":["permitcoast"]},{"id":"oyster","n":"Eastern oyster","k":"aqua","t":5,"cost":4080000,"cycle":610,"rev":28000000,"run":4080000,"profit":23900000,"margin":85.4,"day":39100,"pay":null,"roi":5.84,"rec":true,"sup":null,"up":[6940000,1.45,12700000,1.9],"note":"4200 oysters @ 0.88 · no feed","step":8,"pre":["shellease"]},{"id":"kelp","n":"Sugar kelp","k":"aqua","t":5,"cost":1970000,"cycle":180,"rev":7830000,"run":1970000,"profit":5860000,"margin":74.9,"day":32600,"pay":null,"roi":2.98,"rec":true,"sup":null,"up":[3340000,1.45,6100000,1.9],"note":"900 kg @ 1.15 · no feed","step":8,"pre":["shellease"]},{"id":"keeper","n":"Lighthouse Keeper's Cottage","k":"util","t":5,"cost":2400000,"cycle":112,"rev":1630000,"run":423000,"profit":730000,"margin":44.7,"day":6520,"pay":222,"roi":null,"rec":false,"sup":null,"up":[5280000,1.6,11500000,2.5],"note":"service value 8.50/day","step":6,"pre":["permitcoast"]},{"id":"lighthouse","n":"Lighthouse","k":"util","t":5,"cost":5490000,"cycle":112,"rev":2310000,"run":500000,"profit":708000,"margin":30.7,"day":6330,"pay":340,"roi":null,"rec":false,"sup":null,"up":[12100000,1.6,26300000,2.5],"note":"service value 12.00/day","step":6,"pre":["permitcoast"]},{"id":"mussel","n":"Blue mussel","k":"aqua","t":5,"cost":1970000,"cycle":540,"rev":11700000,"run":1970000,"profit":9760000,"margin":83.2,"day":18100,"pay":null,"roi":4.96,"rec":true,"sup":null,"up":[3340000,1.45,6100000,1.9],"note":"5000 mussels @ 0.31 · no feed","step":8,"pre":["shellease"]},{"id":"coastres","n":"Coastal Research Station","k":"util","t":5,"cost":33300000,"cycle":112,"rev":14400000,"run":5760000,"profit":1980000,"margin":13.8,"day":17700,"pay":431,"roi":null,"rec":false,"sup":null,"up":[73200000,1.6,160000000,2.5],"note":"service value 17.00/day","step":8,"pre":["permitcoast"]},{"id":"permitcoast","n":"Coastal Lease Permit","k":"util","t":5,"cost":1470000,"cycle":112,"rev":633000,"run":183000,"profit":156000,"margin":24.6,"day":1400,"pay":366,"roi":null,"rec":false,"sup":null,"up":[3230000,1.6,7060000,2.5],"note":"service value 6.92/day","step":5,"pre":["biogas"]},{"id":"fishpack","n":"Fish Packing House","k":"bldg","t":5,"cost":25000000,"cycle":112,"rev":17800000,"run":12700000,"profit":141000,"margin":0.8,"day":1290,"pay":545,"roi":null,"rec":false,"sup":2.0,"up":[54900000,1.6,120000000,2.5],"note":"1.5 units/day × 14.04 value added","step":8,"pre":["salmon","trout"]}];
+const TIERN = ["0 Homestead","1 Grain & Roots","2 Herd & Dairy","3 Orchard & Apiary","4 Glass & Power","5 Coast"];
+let ekFilter = "all", esort = "t", edir = -1;
+/* progression-game currency: exact under 10k, abbreviated above */
+function fmt(v){
+  const neg = v < 0, a = Math.abs(v);
+  const t = a >= 1e9 ? (a/1e9).toFixed(a >= 1e10 ? 0 : 2) + "B"
+          : a >= 1e6 ? (a/1e6).toFixed(a >= 1e7 ? 0 : 2) + "M"
+          : a >= 1e4 ? (a/1e3).toFixed(a >= 1e5 ? 0 : 1) + "K"
+          : Math.round(a).toLocaleString();
+  return (neg ? "−" : "") + t;
+}
+function econRows(){
+  const list = ECON.filter(r => ekFilter === "all" || r.k === ekFilter);
+  list.sort((a, b) => {
+    let x = a[esort], y = b[esort];
+    if (esort === "up"){ x = a.up[0]; y = b.up[0]; }
+    if (x === null || x === undefined) x = -1;
+    if (y === null || y === undefined) y = -1;
+    if (typeof x === "string") return edir * x.localeCompare(y);
+    return edir * (x - y);
+  });
+  const money = fmt;
+  document.getElementById("etb").innerHTML = list.map(r => {
+    const g = EMO[r.id] ? EMO[r.id] + " " : "";
+    const payCell = r.pay ? r.pay + "d" : (r.roi ? r.roi.toFixed(1) + "\u00d7" : "\u2014");
+    return `<tr>
+      <td class="nm">${g}${r.n}</td>
+      <td>${r.step}</td>
+      <td class="tr">${TIERN[r.t]}</td>
+      <td>${money(r.cost)}</td>
+      <td>${r.cycle}d</td>
+      <td>${money(r.rev)}</td>
+      <td>${money(r.run)}</td>
+      <td class="${r.profit < 0 ? "neg" : ""}">${money(r.profit)}</td>
+      <td class="${r.margin < 0 ? "neg" : r.margin >= 60 ? "good" : ""}">${r.margin.toFixed(0)}%</td>
+      <td class="${r.day < 0 ? "neg" : ""}">${fmt(r.day)}</td>
+      <td>${payCell}</td>
+      <td>${r.sup ? r.sup : "\u2014"}</td>
+      <td>${money(r.up[0])} \u00b7${r.up[1]}\u00d7 / ${money(r.up[2])} \u00b7${r.up[3]}\u00d7</td>
+    </tr>`;
+  }).join("");
+  document.querySelectorAll("table.et th").forEach(th => {
+    if (th.dataset.s === esort) th.dataset.dir = edir > 0 ? "1" : "0"; else delete th.dataset.dir;
+  });
+}
+document.querySelectorAll("button.chip.ek").forEach(b => b.onclick = () => {
+  ekFilter = b.dataset.k;
+  document.querySelectorAll("button.chip.ek").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+  ECON.forEach(r => { COST[r.id] = r.cost; ECONBY[r.id] = r; });
+econRows();
+});
+document.querySelectorAll("table.et th").forEach(th => th.onclick = () => {
+  const k = th.dataset.s;
+  edir = (k === esort) ? -edir : (k === "n" ? 1 : -1);
+  esort = k; econRows();
+});
+econRows();
+
+readTheme(); legend(); select("wheat"); buildChain(); measure();
+requestAnimationFrame(draw);
+</script>
